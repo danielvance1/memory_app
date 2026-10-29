@@ -1,0 +1,86 @@
+# Pushing to the `rel` branch updates the live site at https://memodeum.com.
+#
+# What happens:
+#   1. Build the production Docker image here on GitHub's runner.
+#   2. Copy the image and the deploy files to the server over SSH.
+#   3. Run deploy/remote-deploy.sh on the server to switch to the new image.
+#   4. Check that the live site answers.
+#
+# Needs three repository secrets (Settings > Secrets and variables > Actions):
+#   SERVER_HOST      the server's IP address
+#   SERVER_USER      the login user on the server (deploy)
+#   SSH_PRIVATE_KEY  the full private key for that user
+name: Deploy
+
+on:
+  push:
+    branches: [rel]
+  workflow_dispatch: # also lets you re-run it by hand from the Actions tab
+
+# Never run two deploys at once; a second one waits for the first to finish.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build image
+        run: docker build -t "memodeum-app:${IMAGE_TAG}" .
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          set -euo pipefail
+          for name in SSH_PRIVATE_KEY SERVER_HOST SERVER_USER; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Repository secret $name is missing or empty"
+              exit 1
+            fi
+          done
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -T 10 -H "$SERVER_HOST" >> ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host target
+            HostName ${SERVER_HOST}
+            User ${SERVER_USER}
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+          EOF
+
+      - name: Copy deploy files
+        run: |
+          set -euo pipefail
+          ssh target 'mkdir -p ~/memodeum'
+          scp deploy/docker-compose.yml deploy/Caddyfile deploy/remote-deploy.sh target:memodeum/
+
+      - name: Send image to the server
+        run: |
+          set -euo pipefail
+          docker save "memodeum-app:${IMAGE_TAG}" | gzip | ssh target 'gunzip | docker load'
+
+      - name: Switch the server to the new image
+        run: |
+          # The tag is expanded here (on the runner) on purpose, then sent to the server.
+          # shellcheck disable=SC2029
+          ssh target "cd ~/memodeum && IMAGE_TAG=${IMAGE_TAG} bash remote-deploy.sh"
+
+      - name: Check the live site
+        run: |
+          curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-connrefused \
+            https://memodeum.com/api/health
+          echo

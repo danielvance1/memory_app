@@ -1,0 +1,93 @@
+# Checks that run on every pull request (and on pushes to main).
+# If any job fails, the PR shows a red X and you know before merging.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  server:
+    name: Server typecheck + build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+
+  client:
+    name: Client typecheck + build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      - run: npm run build
+
+  # Builds the real production image and boots it against a real Postgres,
+  # so a broken Dockerfile or a broken startup is caught before it deploys.
+  docker:
+    name: Docker image boots and serves
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: memodeum
+          POSTGRES_PASSWORD: ci-password
+          POSTGRES_DB: memodeum
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U memodeum -d memodeum"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build image
+        run: docker build -t memodeum-app:ci .
+
+      - name: Start container
+        run: |
+          docker run -d --name smoke --network host \
+            -e DATABASE_URL=postgres://memodeum:ci-password@localhost:5432/memodeum \
+            memodeum-app:ci
+
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+          echo "API health (retries while the app starts):"
+          curl --fail --silent --show-error --retry 15 --retry-delay 1 --retry-connrefused \
+            http://localhost:3000/api/health | tee /dev/stderr | grep -q '"database":"up"'
+          echo
+          echo "Home page and a deep link both return the React shell:"
+          curl --fail --silent --show-error http://localhost:3000/ | grep -q 'id="root"'
+          curl --fail --silent --show-error http://localhost:3000/some/deep/link | grep -q 'id="root"'
+          echo "Unknown API routes return 404:"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://localhost:3000/api/nope)" = "404"
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs smoke
