@@ -1,0 +1,19 @@
+# Local development only: runs PostgreSQL so the API has a database.
+#   docker compose -f docker-compose.dev.yml up -d
+# The credentials match server/.env.example.
+name: memodeum-dev
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: memodeum
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: memodeum
+    ports:
+      - "127.0.0.1:5432:5432" # reachable from this machine only
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+
+volumes:
+  pgdata-dev:

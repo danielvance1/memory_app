@@ -1,0 +1,8 @@
+**/node_modules
+**/dist
+**/.env
+.git
+.github
+deploy
+docker-compose.dev.yml
+README.md

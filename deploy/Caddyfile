@@ -1,0 +1,21 @@
+# Caddy gets and renews free HTTPS certificates for these names automatically.
+# DNS for both names must point at this server.
+
+# www -> bare domain
+www.memodeum.com {
+	redir https://memodeum.com{uri} permanent
+}
+
+memodeum.com {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=86400"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# "app" is the app container's name on the Docker network.
+	reverse_proxy app:3000
+}
