@@ -109,5 +109,5 @@ IMAGE_TAG=<old-tag> docker compose up -d   # roll back to an earlier release
 ## Not built yet
 
 Accounts and email confirmation, the database schema (codes, drills), the three
-core features above, and a PWA manifest. This repo currently ships a minimal page
-that reports whether the server and database are up.
+core features above, and a PWA manifest. The site currently shows just the
+Memodeum header; `GET /api/health` reports whether the server and database are up.
