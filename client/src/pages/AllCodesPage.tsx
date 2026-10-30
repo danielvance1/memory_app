@@ -2,12 +2,13 @@ import { useCallback, useRef } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../auth";
 import { useCodes } from "../codes";
-import CodeSection, { COLUMNS, GAP } from "../components/CodeSection";
+import CodeSection from "../components/CodeSection";
 import CodesGate from "../components/CodesGate";
+import { allCodesTileSize } from "../tileSizing";
 import { useAreaSize } from "../useAreaSize";
 
-// Tiles never get bigger than this, even on a wide screen.
-const MAX_TILE_SIZE = 64;
+// Room kept free under the last section (matches the `pb-4` on the page below).
+const BOTTOM_PADDING = 16;
 
 interface Section {
   title: string;
@@ -47,9 +48,13 @@ function sectionsFor(codeSystem: number): Section[] {
 
 // "All Codes" sub-tab: every code in the user's code system, grouped under
 // headers. Codes the user has set are drawn as set. Tapping one opens it in the Edit tab.
+//
+// Nothing scrolls on the 1 and 2 digit systems: the tiles are sized so every
+// section fits the screen. From the 3 digit system up there are too many tiles
+// for that, so this area scrolls on its own while the page stays put.
 export default function AllCodesPage() {
   const areaRef = useRef<HTMLElement>(null);
-  const { width } = useAreaSize(areaRef);
+  const { width, height } = useAreaSize(areaRef);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { isSet } = useCodes();
@@ -57,12 +62,12 @@ export default function AllCodesPage() {
   // Tapping a tile opens the Edit tab on that code (the code rides in the address).
   const openInEditor = useCallback((digits: string) => navigate(`/codes/edit?code=${digits}`), [navigate]);
 
-  // Ten tiles and nine gaps have to fit across the page, so the tile is a tenth of what's left.
-  const tileSize = Math.min(MAX_TILE_SIZE, Math.floor((width - (COLUMNS - 1) * GAP) / COLUMNS));
+  const system = user?.codeSystem ?? 1;
+  const tileSize = allCodesTileSize(width, Math.max(0, height - BOTTOM_PADDING), system);
   const sections = user ? sectionsFor(user.codeSystem) : [];
 
   return (
-    <section ref={areaRef} aria-label="All codes" className="flex flex-col gap-8">
+    <section ref={areaRef} aria-label="All codes" className="-mx-1 flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-1 pb-4">
       {/* Wait for the first measurement so the tiles are built at the right size once,
           and for the user's codes, so no tile flips from "not set" to "set" after appearing. */}
       {tileSize > 0 && (
@@ -75,6 +80,7 @@ export default function AllCodesPage() {
               count={s.count}
               digitWidth={s.digitWidth}
               tileSize={tileSize}
+              scrollBox={areaRef}
               isSet={isSet}
               onSelect={openInEditor}
             />
