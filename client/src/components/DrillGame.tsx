@@ -3,37 +3,45 @@ import { Link } from "react-router";
 import { useAuth } from "../auth";
 import { useCodes } from "../codes";
 import { buildTrie, isUniquelyIdentified, normalizeText, type Trie } from "../drill/trie";
-import { nextTyped } from "../drill/typing";
+import { isFullMatch, nextTyped } from "../drill/typing";
 import { drillTileSize } from "../tileSizing";
 import { useAreaSize } from "../useAreaSize";
 import Celebration from "./Celebration";
 import CodeComponent from "./CodeComponent";
 import { inputField, primaryButton, secondaryButton, textLink } from "./ui";
 
-// The "code to description" drill. A code is shown; the user types the text
-// they saved for it. The box only accepts letters that continue the real
-// text, and as soon as what's typed can only mean that one code (see
-// drill/trie.ts) it scores: confetti flies out of the tile, the full correct
-// answer is shown, and a new random code appears. One round lasts a minute.
+// The two drill games, one component. Each round lasts a minute and uses only
+// codes that are set and fit the user's current code system.
 //
-// "Show answer" reveals the text for the code on screen when the user can't
-// remember it. They still have to type it to score, and every code they peeked
-// at is counted separately ("Peeked"), at most once per code shown.
+//  - "code-to-text": a code is shown; the user types the text they saved for
+//    it. As soon as what's typed can only mean that one code (see
+//    drill/trie.ts) it scores.
+//  - "text-to-code": a description is shown; the user types the digits of its
+//    code. Nothing is guessed from a start: the WHOLE code has to be typed
+//    (no trie).
+//
+// In both, the box only accepts the next correct character, so a wrong key
+// simply doesn't appear. On a score, confetti flies out, the full correct
+// answer is shown, and a new random item appears.
+//
+// "Show answer" reveals what has to be typed when the user can't remember it.
+// They still have to type it to score, and every item they peeked at is counted
+// separately ("Peeked"), at most once per item shown.
 //
 // Everything is sized to the room available so the screen doesn't scroll: the
-// tile scales with the height, and the answer box in the middle takes
+// prompt scales with the height, and the answer box in the middle takes
 // whatever is left (it scrolls inside itself if a long answer needs more).
-//
-// Only codes that are set, and fit the user's current code system, are used.
+
+export type DrillDirection = "code-to-text" | "text-to-code";
 
 const ROUND_SECONDS = 60;
 
 interface Item {
   code: string;
-  /** The saved text, lowercased with whitespace squeezed (what has to be typed). */
-  target: string;
-  /** The saved text as the user wrote it (capital letters kept), whitespace squeezed. For showing the answer. */
+  /** The saved text as the user wrote it (capital letters kept), whitespace squeezed. For showing. */
   display: string;
+  /** What has to be typed: the text lowercased with whitespace squeezed, or the code's digits. */
+  target: string;
 }
 
 type Phase = "idle" | "running" | "finished";
@@ -46,7 +54,29 @@ function formatTime(seconds: number): string {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
-export default function CodeToTextDrill() {
+// Everything that differs between the two games.
+const games = {
+  "code-to-text": {
+    inputLabel: "Type the description of the code shown",
+    intro: (seconds: number) =>
+      `You'll see a code. Type the description you saved for it. As soon as what you've typed can only mean that code, it scores and a new one appears. Stuck? "Show answer" reveals it (you still have to type it, and it's counted as a peek). You have ${seconds} seconds.`,
+    target: (code: string, text: string) => normalizeText(text),
+    revealed: (item: Item) => item.display,
+    correct: (item: Item) => `Code ${item.code}: ${item.display}`,
+  },
+  "text-to-code": {
+    inputLabel: "Type the code for the description shown",
+    intro: (seconds: number) =>
+      `You'll see a description. Type the digits of its code: all of them, one at a time. A new description appears once the whole code is in. Stuck? "Show answer" reveals it (you still have to type it, and it's counted as a peek). You have ${seconds} seconds.`,
+    target: (code: string) => code,
+    revealed: (item: Item) => `Code ${item.code}`,
+    correct: (item: Item) => `${item.display} is code ${item.code}`,
+  },
+} as const;
+
+export default function DrillGame({ direction }: { direction: DrillDirection }) {
+  const game = games[direction];
+  const textToCode = direction === "text-to-code";
   const { user } = useAuth();
   const { entries } = useCodes();
   const system = user?.codeSystem ?? 1;
@@ -57,13 +87,13 @@ export default function CodeToTextDrill() {
         .filter((entry) => entry.code.length <= system)
         .map((entry) => ({
           code: entry.code,
-          target: normalizeText(entry.text),
           display: entry.text.replace(/\s+/g, " ").trim(),
+          target: game.target(entry.code, entry.text),
         }))
-        .filter((item) => item.target !== ""),
-    [entries, system],
+        .filter((item) => item.display !== ""),
+    [entries, system, game],
   );
-  const hasSetCodesOutsideSystem = entries.some((entry) => normalizeText(entry.text) !== "") && available.length === 0;
+  const hasSetCodesOutsideSystem = entries.some((entry) => entry.text.trim() !== "") && available.length === 0;
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [pool, setPool] = useState<Item[]>([]);
@@ -72,10 +102,10 @@ export default function CodeToTextDrill() {
   const [typed, setTyped] = useState("");
   const [score, setScore] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(ROUND_SECONDS);
-  const [answered, setAnswered] = useState<Item | null>(null); // the code just scored, so its full answer can be shown
+  const [answered, setAnswered] = useState<Item | null>(null); // the item just scored, so its full answer can be shown
   const [bursts, setBursts] = useState(0); // goes up on every score; a new number makes a fresh burst of confetti
-  const [revealed, setRevealed] = useState(false); // has "Show answer" been used for the code on screen?
-  const [peeks, setPeeks] = useState(0); // how many codes this round the answer was revealed for
+  const [revealed, setRevealed] = useState(false); // has "Show answer" been used for the item on screen?
+  const [peeks, setPeeks] = useState(0); // how many items this round the answer was revealed for
   const areaRef = useRef<HTMLDivElement>(null);
   const { width, height } = useAreaSize(areaRef);
   const tileSize = drillTileSize(width, height);
@@ -86,7 +116,7 @@ export default function CodeToTextDrill() {
     if (available.length === 0) return;
     // The round uses a snapshot of the codes taken now.
     setPool(available);
-    setTrie(buildTrie(available.map((item) => item.target)));
+    setTrie(textToCode ? null : buildTrie(available.map((item) => item.target)));
     setCurrent(pick(available));
     setTyped("");
     setScore(0);
@@ -116,21 +146,23 @@ export default function CodeToTextDrill() {
   }, [phase]);
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    if (phase !== "running" || current === null || trie === null) return;
+    if (phase !== "running" || current === null) return;
     const next = nextTyped(typed, event.target.value, current.target);
-    if (isUniquelyIdentified(trie, next, current.target)) {
+    // text-to-code needs the whole code; code-to-text is done as soon as the start can only mean this text.
+    const done = textToCode ? isFullMatch(next, current.target) : trie !== null && isUniquelyIdentified(trie, next, current.target);
+    if (done) {
       setScore((s) => s + 1);
       setAnswered(current);
-      setCurrent(pick(pool)); // may be the same code again; the confetti shows it counted
+      setCurrent(pick(pool)); // may be the same item again; the confetti shows it counted
       setTyped("");
       setBursts((n) => n + 1);
-      setRevealed(false); // the next code starts hidden again
+      setRevealed(false); // the next item starts hidden again
     } else {
       setTyped(next);
     }
   }
 
-  // Shows the answer for the code on screen. Counted once per code, however often it's pressed.
+  // Shows the answer for the item on screen. Counted once per item, however often it's pressed.
   function reveal() {
     if (phase !== "running" || revealed) return;
     setRevealed(true);
@@ -143,11 +175,7 @@ export default function CodeToTextDrill() {
     <div ref={areaRef} className="flex min-h-0 w-full max-w-sm flex-1 flex-col items-center gap-3">
       {phase === "idle" && (
         <>
-          <p className="text-center text-sm text-muted">
-            You'll see a code. Type the description you saved for it. As soon as what you've typed can only mean that
-            code, it scores and a new one appears. Stuck? "Show answer" reveals it (you still have to type it, and it's
-            counted as a peek). You have {ROUND_SECONDS} seconds.
-          </p>
+          <p className="text-center text-sm text-muted">{game.intro(ROUND_SECONDS)}</p>
           {available.length === 0 && (
             <p className="text-center text-sm text-slate-200">
               {hasSetCodesOutsideSystem
@@ -175,9 +203,9 @@ export default function CodeToTextDrill() {
             </p>
           </div>
 
-          {/* One box for messages, above the tile so a phone keyboard doesn't cover it. It shows the revealed answer
-              for the code on screen, or else the full correct answer for the code you just got (not when the same
-              code comes up again, since that would give its answer away). It keeps a minimum height so the screen
+          {/* One box for messages, above the prompt so a phone keyboard doesn't cover it. It shows the revealed answer
+              for the item on screen, or else the full correct answer for the one you just got (not when the same
+              item comes up again, since that would give its answer away). It keeps a minimum height so the screen
               doesn't jump, and scrolls inside itself when a long answer doesn't fit. */}
           <div
             className="min-h-14 w-full shrink overflow-y-auto"
@@ -190,29 +218,44 @@ export default function CodeToTextDrill() {
           >
             {revealed && current ? (
               <p className="break-words rounded-xl bg-indigo-500/20 px-4 py-2 text-center text-sm text-slate-100">
-                <span className="font-semibold text-indigo-300">Answer:</span> {current.display}
+                <span className="font-semibold text-indigo-300">Answer:</span> {game.revealed(current)}
               </p>
             ) : (
               answered &&
               current &&
               answered.code !== current.code && (
                 <p key={bursts} className="break-words rounded-xl bg-accent/15 px-4 py-2 text-center text-sm text-slate-100">
-                  <span className="font-semibold text-accent">Correct!</span> Code {answered.code}: {answered.display}
+                  <span className="font-semibold text-accent">Correct!</span> {game.correct(answered)}
                 </p>
               )
             )}
           </div>
 
-          {/* Tapping the tile must not take the keyboard away from the text box. The key makes a new tile
+          {/* Tapping the prompt must not take the keyboard away from the text box. The key makes a new prompt
               (and so a fresh burst of confetti) for every score. */}
-          <div
-            key={bursts}
-            className={`relative shrink-0 ${bursts > 0 ? "celebrate-flash" : ""}`}
-            onMouseDown={(e) => e.preventDefault()}
-          >
-            {current && <CodeComponent digits={current.code} isSet size={tileSize} showLabel={false} />}
-            {bursts > 0 && <Celebration />}
-          </div>
+          {textToCode ? (
+            <div
+              key={bursts}
+              className={`relative flex min-h-24 w-full max-w-sm flex-1 flex-col rounded-2xl border-2 border-accent bg-tile ${bursts > 0 ? "celebrate-flash" : ""}`}
+              style={{ maxHeight: "18rem" }}
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              {/* my-auto centres short text; long text scrolls inside the card. */}
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+                <p className="my-auto break-words text-center text-xl font-semibold text-slate-100">{current?.display}</p>
+              </div>
+              {bursts > 0 && <Celebration />}
+            </div>
+          ) : (
+            <div
+              key={bursts}
+              className={`relative shrink-0 ${bursts > 0 ? "celebrate-flash" : ""}`}
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              {current && <CodeComponent digits={current.code} isSet size={tileSize} showLabel={false} />}
+              {bursts > 0 && <Celebration />}
+            </div>
+          )}
 
           {/* Same: pressing this keeps the keyboard open. */}
           <button
@@ -248,7 +291,7 @@ export default function CodeToTextDrill() {
         type="text"
         value={typed}
         onChange={handleChange}
-        aria-label="Type the description of the code shown"
+        aria-label={game.inputLabel}
         aria-hidden={!running}
         tabIndex={running ? 0 : -1}
         autoComplete="off"
@@ -256,6 +299,8 @@ export default function CodeToTextDrill() {
         autoCapitalize="none"
         spellCheck={false}
         enterKeyHint="done"
+        // The code is only digits, so phones can show the number pad.
+        inputMode={textToCode ? "numeric" : "text"}
         className={running ? `${inputField} shrink-0 border-slate-600` : "sr-only"}
       />
     </div>

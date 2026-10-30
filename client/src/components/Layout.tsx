@@ -34,14 +34,18 @@ export default function Layout() {
       </header>
 
       {/* Reserve the bar's height while loading so the page doesn't jump. */}
-      <nav aria-label="Account" className="mx-auto flex min-h-11 w-full max-w-5xl shrink-0 flex-wrap items-center justify-center gap-1 px-4">
+      <nav aria-label="Account" className="mx-auto flex min-h-11 w-full max-w-5xl shrink-0 flex-wrap items-center justify-center gap-0.5 px-4 sm:gap-1">
         {loading ? null : user ? (
           <>
-            <span className="max-w-[10rem] truncate px-3 text-sm text-slate-400" title={user.username}>
+            {/* Phones narrower than 360px have no room for the name next to the buttons. */}
+            <span className="hidden max-w-[3.5rem] truncate px-1 text-sm text-slate-400 min-[360px]:inline sm:max-w-[10rem] sm:px-3" title={user.username}>
               {user.username}
             </span>
             <Link to="/codes" className={navButton}>
               Codes
+            </Link>
+            <Link to="/test-memory" className={navButton}>
+              Test Memory
             </Link>
             {user.isAdmin && (
               <Link to="/admin" className={navButton}>

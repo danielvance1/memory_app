@@ -9,6 +9,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import SignupPage from "./pages/SignupPage";
+import TestMemoryPage from "./pages/TestMemoryPage";
 
 // Which screen shows for which address. Everything sits inside <Layout />,
 // which draws the title and account bar around the page.
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="login" element={<LoginPage />} />
         <Route path="signup" element={<SignupPage />} />
         <Route path="admin" element={<AdminPage />} />
+        <Route path="test-memory" element={<TestMemoryPage />} />
         <Route path="codes" element={<CodesPage />}>
           <Route index element={<Navigate to="edit" replace />} />
           <Route path="edit" element={<EditCodePage />} />

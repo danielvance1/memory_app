@@ -1,5 +1,5 @@
 import { useState } from "react";
-import CodeToTextDrill from "../components/CodeToTextDrill";
+import DrillGame from "../components/DrillGame";
 import CodesGate from "../components/CodesGate";
 
 type Mode = "code-to-text" | "text-to-code";
@@ -11,7 +11,7 @@ const modes: { id: Mode; label: string }[] = [
 
 // "Drill" sub-tab: practice games. A switch at the top picks the mode.
 //  - Code → Description: you see a code and type its description.
-//  - Description → Code: the same game the other way around (not built yet).
+//  - Description → Code: the same game the other way around, but the whole code has to be typed.
 export default function DrillPage() {
   const [mode, setMode] = useState<Mode>("code-to-text");
 
@@ -36,11 +36,8 @@ export default function DrillPage() {
       </div>
 
       <CodesGate>
-        {mode === "code-to-text" ? (
-          <CodeToTextDrill />
-        ) : (
-          <p className="py-6 text-center text-lg text-slate-300">Under construction</p>
-        )}
+        {/* The key gives each game a fresh start when you switch between them. */}
+        <DrillGame key={mode} direction={mode} />
       </CodesGate>
     </section>
   );

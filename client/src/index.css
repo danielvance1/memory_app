@@ -35,3 +35,32 @@
     animation: flash 0.45s ease-out;
   }
 }
+
+/* The Test Memory carousel (components/CodeCarousel.tsx): tiles glide to their new place and fade
+   between full and half brightness. A tile that has just been made up slides in from the right.
+   People who ask their device for less motion get instant changes. */
+.carousel-tile {
+  transition:
+    transform 0.35s ease,
+    opacity 0.35s ease;
+}
+
+@keyframes carousel-enter {
+  from {
+    opacity: 0;
+    transform: translateX(calc(-50% + var(--x) + var(--step)));
+  }
+}
+
+.carousel-enter {
+  animation: carousel-enter 0.35s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-tile {
+    transition: none;
+  }
+  .carousel-enter {
+    animation: none;
+  }
+}
