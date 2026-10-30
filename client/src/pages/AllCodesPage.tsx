@@ -1,77 +1,72 @@
-import { useRef, useState } from "react";
-import { ApiError } from "../api";
+import { useRef } from "react";
 import { useAuth } from "../auth";
-import CodeComponent from "../components/CodeComponent";
-import { secondaryButton } from "../components/ui";
+import CodeSection, { COLUMNS, GAP } from "../components/CodeSection";
 import { useAreaSize } from "../useAreaSize";
 
-// The tile may use at most this share of the sub-tab's height, so there is
-// room below it for the content coming in the next ticket.
-const MAX_TILE_SHARE = 0.25;
+// Tiles never get bigger than this, even on a wide screen.
+const MAX_TILE_SIZE = 64;
 
-// The code systems that exist: 1, 2 or 3 digits per code.
-const MIN_SYSTEM = 1;
-const MAX_SYSTEM = 3;
+interface Section {
+  title: string;
+  start: number;
+  count: number;
+  digitWidth: number;
+}
 
-// "All Codes" sub-tab. The top of the screen shows the next code the user
-// needs to define. For now that is a fixed placeholder (174) and tapping it
-// just flips it between set and unset so both looks can be reviewed.
-// Below it: which code system the user is on, and buttons to switch.
-export default function AllCodesPage() {
-  const areaRef = useRef<HTMLElement>(null);
-  const { width, height } = useAreaSize(areaRef);
-  const [isSet, setIsSet] = useState(false);
-  const { user, setCodeSystem } = useAuth();
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+function pad(n: number, width: number): string {
+  return String(n).padStart(width, "0");
+}
 
-  // Square, so one number: no taller than 25% of the area and no wider than the area.
-  const tileSize = Math.floor(Math.min(height * MAX_TILE_SHARE, width));
-
-  async function switchTo(system: number) {
-    setSaving(true);
-    setError(null);
-    try {
-      await setCodeSystem(system);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
-    } finally {
-      setSaving(false);
+// Which groups of codes to show for a code system. Each system includes the
+// ones before it: system 2 = single + double digits, system 3 adds a section
+// for every hundred (000-099, 100-199, ... 900-999).
+function sectionsFor(codeSystem: number): Section[] {
+  const sections: Section[] = [];
+  if (codeSystem >= 1) {
+    sections.push({ title: "Single digits: 0-9", start: 0, count: 10, digitWidth: 1 });
+  }
+  if (codeSystem >= 2) {
+    sections.push({ title: "Double digits: 00-99", start: 0, count: 100, digitWidth: 2 });
+  }
+  if (codeSystem >= 3) {
+    for (let hundred = 0; hundred < 10; hundred++) {
+      const start = hundred * 100;
+      sections.push({
+        title: `Triple digits: ${pad(start, 3)}-${pad(start + 99, 3)}`,
+        start,
+        count: 100,
+        digitWidth: 3,
+      });
     }
   }
+  return sections;
+}
 
-  const system = user?.codeSystem;
+// "All Codes" sub-tab: every code in the user's code system, grouped under
+// headers. For now they are all unset because codes can't be saved yet.
+export default function AllCodesPage() {
+  const areaRef = useRef<HTMLElement>(null);
+  const { width } = useAreaSize(areaRef);
+  const { user } = useAuth();
+
+  // Ten tiles and nine gaps have to fit across the page, so the tile is a tenth of what's left.
+  const tileSize = Math.min(MAX_TILE_SIZE, Math.floor((width - (COLUMNS - 1) * GAP) / COLUMNS));
+  const sections = user ? sectionsFor(user.codeSystem) : [];
 
   return (
-    <section ref={areaRef} aria-label="All codes" className="flex flex-col items-center">
-      {/* Hold the space (even before measuring) so the page doesn't jump. */}
-      <div className="flex items-end justify-center" style={{ height: tileSize }}>
-        {tileSize > 0 && <CodeComponent digits="174" isSet={isSet} size={tileSize} onClick={() => setIsSet((v) => !v)} />}
-      </div>
-
-      {system !== undefined && (
-        <div className="mt-6 flex w-full max-w-sm flex-col items-center gap-3">
-          <p className="text-lg font-semibold text-slate-100">{system} digit system</p>
-
-          {/* Each button only exists when there is somewhere to go in that direction. */}
-          {system < MAX_SYSTEM && (
-            <button type="button" className={secondaryButton} disabled={saving} onClick={() => switchTo(system + 1)}>
-              Switch to {system + 1} digit system
-            </button>
-          )}
-          {system > MIN_SYSTEM && (
-            <button type="button" className={secondaryButton} disabled={saving} onClick={() => switchTo(system - 1)}>
-              Switch to {system - 1} digit system
-            </button>
-          )}
-
-          {error && (
-            <p role="alert" className="text-center text-sm text-rose-300">
-              {error}
-            </p>
-          )}
-        </div>
-      )}
+    <section ref={areaRef} aria-label="All codes" className="flex flex-col gap-8">
+      {/* Wait for the first measurement so the tiles are built at the right size once. */}
+      {tileSize > 0 &&
+        sections.map((s) => (
+          <CodeSection
+            key={s.title}
+            title={s.title}
+            start={s.start}
+            count={s.count}
+            digitWidth={s.digitWidth}
+            tileSize={tileSize}
+          />
+        ))}
     </section>
   );
 }
