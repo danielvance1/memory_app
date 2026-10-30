@@ -6,6 +6,7 @@ import { loadUser } from "./auth/middleware";
 import { adminRouter } from "./routes/admin";
 import { authRouter } from "./routes/auth";
 import { healthRouter } from "./routes/health";
+import { meRouter } from "./routes/me";
 
 // Builds the Express app without starting it, so tests can run it directly.
 export function createApp(config: AppConfig = loadConfig()): Express {
@@ -30,6 +31,7 @@ export function createApp(config: AppConfig = loadConfig()): Express {
   app.use("/api", loadUser); // figure out who's logged in for everything below
   app.use("/api/auth", authRouter(config));
   app.use("/api/admin", adminRouter(config));
+  app.use("/api/me", meRouter());
 
   // Any other /api/... URL is a JSON 404 (not the React page).
   app.use("/api", (_req, res) => {

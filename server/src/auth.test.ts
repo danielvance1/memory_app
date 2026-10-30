@@ -38,7 +38,7 @@ describe("signup and sessions", () => {
 
     const signup = await browser.post("/api/auth/signup", input);
     assert.equal(signup.status, 201);
-    assert.deepEqual(signup.body.user, { id: 1, username: "Dan_V", email: "dan@example.com", isAdmin: false });
+    assert.deepEqual(signup.body.user, { id: 1, username: "Dan_V", email: "dan@example.com", isAdmin: false, codeSystem: 1 });
     assert.ok(!JSON.stringify(signup.body).includes("password"), "response must not mention a password");
 
     // The cookie is locked down.
