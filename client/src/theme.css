@@ -1,0 +1,20 @@
+/* The app's shared colors, in ONE place.
+ *
+ * Change a value here and every class that uses it changes with it:
+ * "--color-accent" gives you bg-accent, text-accent, border-accent, and so on.
+ *
+ * The names describe the ROLE of the color, not its hue, so they stay true
+ * if you later switch green to something else.
+ *
+ * Only the code tile uses these so far. The rest of the app (page background,
+ * buttons, tabs, forms) still uses raw Tailwind colors and will be moved over
+ * piece by piece.
+ */
+@theme {
+  /* The main brand color: the green on code tiles. */
+  --color-accent: #10b981;
+  /* The gray used for code tile fills, borders and digits. */
+  --color-tile: #334155;
+  /* Quiet secondary text on dark surfaces, like the small label on a tile. */
+  --color-muted: #94a3b8;
+}
