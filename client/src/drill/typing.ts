@@ -28,3 +28,13 @@ export function nextTyped(current: string, proposed: string, target: string): st
   }
   return current;
 }
+
+/**
+ * True when the whole target has been typed. This is the rule for the
+ * description-to-code game, where a start of the code is never enough (unlike
+ * the code-to-description game, which stops as soon as the start can only mean
+ * one text; see trie.ts). Both strings should already be what the box holds.
+ */
+export function isFullMatch(typed: string, target: string): boolean {
+  return target !== "" && typed === target;
+}

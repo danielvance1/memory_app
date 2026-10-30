@@ -9,6 +9,8 @@ import {
   editingTileSize,
   gridTileSizeForWidth,
   idleEditTileSize,
+  MEMORY_GAP,
+  memoryTileSize,
   sectionRowCounts,
 } from "./tileSizing";
 
@@ -123,5 +125,23 @@ describe("drillTileSize", () => {
   });
   it("never wider than the area", () => {
     expect(drillTileSize(40, 600)).toBe(40);
+  });
+});
+
+describe("memoryTileSize", () => {
+  it("three tiles and two gaps always fit across the width", () => {
+    for (const width of [200, 272, 300, 448, 700]) {
+      const tile = memoryTileSize(width, 5000);
+      expect(tile * 3 + 2 * MEMORY_GAP).toBeLessThanOrEqual(width);
+    }
+  });
+  it("is capped at 160 and by a bit over a third of the height", () => {
+    expect(memoryTileSize(2000, 5000)).toBe(160);
+    expect(memoryTileSize(2000, 200)).toBe(70);
+    expect(memoryTileSize(272, 5000)).toBe(82);
+  });
+  it("never negative", () => {
+    expect(memoryTileSize(10, 5000)).toBe(0);
+    expect(memoryTileSize(272, 0)).toBe(0);
   });
 });
