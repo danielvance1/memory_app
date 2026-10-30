@@ -29,9 +29,12 @@ WORKDIR /app
 COPY server/package.json server/package-lock.json ./server/
 RUN cd server && npm ci --omit=dev
 
-# The compiled server and the built client. The server finds the client at
-# ../../client/dist relative to server/dist, so keep this folder layout.
+# The compiled server, its database migrations (applied automatically at
+# startup), and the built client. The server finds the client at
+# ../../client/dist and the migrations at ../migrations, both relative to
+# server/dist, so keep this folder layout.
 COPY --from=server-build /app/server/dist ./server/dist
+COPY server/migrations ./server/migrations
 COPY --from=client-build /app/client/dist ./client/dist
 
 USER node
