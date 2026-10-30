@@ -1,4 +1,5 @@
-import { useRef } from "react";
+import { useRef, type RefObject } from "react";
+import { COLUMNS, GAP } from "../tileSizing";
 import { useNearViewport } from "../useNearViewport";
 import CodeComponent from "./CodeComponent";
 
@@ -12,9 +13,6 @@ import CodeComponent from "./CodeComponent";
 // The tiles are only built once the section is near the screen (see
 // useNearViewport). Until then an empty box of exactly the same height holds
 // the space, so the page never jumps when they appear.
-
-export const COLUMNS = 10;
-export const GAP = 3; // pixels between tiles
 
 /** How wide a grid is, in pixels, when its tiles are `tileSize` wide. */
 export function gridWidth(tileSize: number): number {
@@ -31,21 +29,32 @@ interface CodeSectionProps {
   digitWidth: number;
   /** The width and height of every tile, in pixels. */
   tileSize: number;
+  /** The box this section scrolls inside, if it isn't the whole window (see useNearViewport). */
+  scrollBox?: RefObject<HTMLElement | null>;
   /** Whether a code has been set; set tiles are drawn as set. */
   isSet: (digits: string) => boolean;
   /** Called with the tile's digits (like "042") when a tile is tapped. */
   onSelect?: (digits: string) => void;
 }
 
-export default function CodeSection({ title, start, count, digitWidth, tileSize, isSet, onSelect }: CodeSectionProps) {
+export default function CodeSection({
+  title,
+  start,
+  count,
+  digitWidth,
+  tileSize,
+  scrollBox,
+  isSet,
+  onSelect,
+}: CodeSectionProps) {
   const boxRef = useRef<HTMLDivElement>(null);
-  const near = useNearViewport(boxRef);
+  const near = useNearViewport(boxRef, 800, scrollBox);
 
   const rows = Math.ceil(count / COLUMNS);
   const boxHeight = rows * tileSize + (rows - 1) * GAP;
 
   return (
-    <section aria-label={title} className="mx-auto" style={{ width: gridWidth(tileSize) }}>
+    <section aria-label={title} className="mx-auto shrink-0" style={{ width: gridWidth(tileSize) }}>
       <h2 className="mb-3 text-lg font-semibold text-slate-100">{title}</h2>
       <div ref={boxRef} style={{ height: boxHeight }}>
         {near && (

@@ -8,8 +8,8 @@ const subTabs = [
   { to: "drill", label: "Drill" },
 ];
 
-// The frame for everything under /codes: a row of sub-tabs, then whichever
-// sub-tab is selected (<Outlet />).
+// The frame for everything under /codes: a pinned row of sub-tabs, then whichever
+// sub-tab is selected (<Outlet />) filling the rest of the screen.
 export default function CodesPage() {
   const { user, loading } = useAuth();
 
@@ -17,9 +17,9 @@ export default function CodesPage() {
   if (!user) return <Navigate to="/login" replace />;
 
   return (
-    <div>
-      {/* Scrolls sideways inside itself if there are ever more tabs than fit; the page never does. */}
-      <nav aria-label="Codes sections" className="-mt-2 mb-4 flex overflow-x-auto border-b border-slate-700">
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* Pinned: the tabs never move. They only scroll sideways inside themselves if there are ever more than fit. */}
+      <nav aria-label="Codes sections" className="mb-3 flex shrink-0 overflow-x-auto border-b border-slate-700">
         {subTabs.map((tab) => (
           <NavLink
             key={tab.to}
@@ -36,7 +36,10 @@ export default function CodesPage() {
           </NavLink>
         ))}
       </nav>
-      <Outlet />
+      {/* Whichever tab is selected fills all the room under the tabs. */}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <Outlet />
+      </div>
     </div>
   );
 }
