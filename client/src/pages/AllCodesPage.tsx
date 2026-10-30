@@ -9,6 +9,9 @@ import { useAreaSize } from "../useAreaSize";
 
 // Room kept free under the last section (matches the `pb-4` on the page below).
 const BOTTOM_PADDING = 16;
+// Room kept free on each side (matches the `px-1` on the page below), so the focus outline of a
+// tile at the very edge isn't cut off. The tiles have to fit inside what is left.
+const SIDE_PADDING = 4;
 
 interface Section {
   title: string;
@@ -49,6 +52,9 @@ function sectionsFor(codeSystem: number): Section[] {
 // "All Codes" sub-tab: every code in the user's code system, grouped under
 // headers. Codes the user has set are drawn as set. Tapping one opens it in the Edit tab.
 //
+// It only ever scrolls up and down: sideways scrolling is switched off (overflow-x-hidden), and
+// the tiles are sized to fit the width that is really available.
+//
 // Nothing scrolls on the 1 and 2 digit systems: the tiles are sized so every
 // section fits the screen. From the 3 digit system up there are too many tiles
 // for that, so this area scrolls on its own while the page stays put.
@@ -63,11 +69,15 @@ export default function AllCodesPage() {
   const openInEditor = useCallback((digits: string) => navigate(`/codes/edit?code=${digits}`), [navigate]);
 
   const system = user?.codeSystem ?? 1;
-  const tileSize = allCodesTileSize(width, Math.max(0, height - BOTTOM_PADDING), system);
+  const tileSize = allCodesTileSize(
+    Math.max(0, width - 2 * SIDE_PADDING),
+    Math.max(0, height - BOTTOM_PADDING),
+    system,
+  );
   const sections = user ? sectionsFor(user.codeSystem) : [];
 
   return (
-    <section ref={areaRef} aria-label="All codes" className="-mx-1 flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-1 pb-4">
+    <section ref={areaRef} aria-label="All codes" className="-mx-1 flex min-h-0 flex-1 flex-col gap-8 overflow-x-hidden overflow-y-auto px-1 pb-4">
       {/* Wait for the first measurement so the tiles are built at the right size once,
           and for the user's codes, so no tile flips from "not set" to "set" after appearing. */}
       {tileSize > 0 && (
