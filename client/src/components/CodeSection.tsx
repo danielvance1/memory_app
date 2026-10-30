@@ -31,9 +31,11 @@ interface CodeSectionProps {
   digitWidth: number;
   /** The width and height of every tile, in pixels. */
   tileSize: number;
+  /** Called with the tile's digits (like "042") when a tile is tapped. */
+  onSelect?: (digits: string) => void;
 }
 
-export default function CodeSection({ title, start, count, digitWidth, tileSize }: CodeSectionProps) {
+export default function CodeSection({ title, start, count, digitWidth, tileSize, onSelect }: CodeSectionProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const near = useNearViewport(boxRef);
 
@@ -49,14 +51,18 @@ export default function CodeSection({ title, start, count, digitWidth, tileSize 
             className="grid"
             style={{ gridTemplateColumns: `repeat(${COLUMNS}, ${tileSize}px)`, gap: GAP }}
           >
-            {Array.from({ length: count }, (_, i) => (
-              <CodeComponent
-                key={i}
-                digits={String(start + i).padStart(digitWidth, "0")}
-                isSet={false}
-                size={tileSize}
-              />
-            ))}
+            {Array.from({ length: count }, (_, i) => {
+              const digits = String(start + i).padStart(digitWidth, "0");
+              return (
+                <CodeComponent
+                  key={i}
+                  digits={digits}
+                  isSet={false}
+                  size={tileSize}
+                  onClick={onSelect ? () => onSelect(digits) : undefined}
+                />
+              );
+            })}
           </div>
         )}
       </div>

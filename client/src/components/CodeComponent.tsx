@@ -40,10 +40,19 @@ interface CodeComponentProps {
   onClick?: () => void;
   /** The width and height. A number means pixels; a string is any CSS length like "4rem". */
   size?: number | string;
+  /** Set to false to never show the small label above the digits (for example, on a tile that isn't clickable). */
+  showLabel?: boolean;
   className?: string;
 }
 
-export default function CodeComponent({ digits, isSet, onClick, size = "4rem", className = "" }: CodeComponentProps) {
+export default function CodeComponent({
+  digits,
+  isSet,
+  onClick,
+  size = "4rem",
+  showLabel = true,
+  className = "",
+}: CodeComponentProps) {
   const length = typeof size === "number" ? `${size}px` : size;
 
   // "Active" means the tile is being pointed at with a mouse or pen, or has
@@ -52,7 +61,7 @@ export default function CodeComponent({ digits, isSet, onClick, size = "4rem", c
   const [keyboardFocus, setKeyboardFocus] = useState(false);
   const active = pointerOver || keyboardFocus;
 
-  const labelText = isSet ? (active ? "click to edit" : "") : active ? "click to set" : "not set";
+  const labelText = !showLabel ? "" : isSet ? (active ? "click to edit" : "") : active ? "click to set" : "not set";
 
   // Digits take up about 60% of the font size each, so longer codes need a
   // smaller font to stay inside the tile. Capped so 1-2 digit codes aren't huge.
