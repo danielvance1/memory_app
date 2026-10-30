@@ -43,7 +43,7 @@ Lower priority: email verification (Resend, free tier; explicitly deferred but t
 - Mobile first, always: tap targets at least 44px (`min-h-11`/`min-h-12`), inputs at least 16px (stops iOS zoom), no sideways page scrolling down to 320px wide, `100dvh`, safe-area insets. Shared styles: `client/src/components/ui.ts`; form fields: `TextField`.
 - Colors: shared colors live in `client/src/theme.css` as Tailwind `@theme` tokens named by role (`accent`, `tile`, `muted` give `bg-accent`, `text-tile`, `text-muted`...). Use these in new work instead of raw Tailwind colors. Only `CodeComponent` uses them so far; the rest of the app (backgrounds, buttons, tabs, forms) will move over piece by piece, only when Daniel asks. Reusable pieces so far: `CodeComponent`, `TypedText` (types text out character by character).
 - Client talks to the server only through `client/src/api.ts` (`api<T>()`, `ApiError` with `field`/`code`); login state is `useAuth()` from `client/src/auth.tsx`. Pages live in `client/src/pages/`, routes in `client/src/App.tsx`, the frame (title and account bar) in `components/Layout.tsx`.
-- Tests: `cd server && npm test` needs `TEST_DATABASE_URL` pointing at a throwaway Postgres (tests empty its tables). CI runs server typecheck/build, server tests against real Postgres, client typecheck/build, and a Docker smoke test.
+- Tests: `cd server && npm test` needs `TEST_DATABASE_URL` pointing at a throwaway Postgres (tests empty its tables). `cd client && npm test` runs Vitest unit tests for plain logic (the drill's trie and typing rules, in `client/src/drill/`). CI runs server typecheck/build, server tests against real Postgres, client tests + typecheck/build, and a Docker smoke test.
 
 ## Where things stand (as of 2026-10-29)
 
@@ -53,6 +53,7 @@ Lower priority: email verification (Resend, free tier; explicitly deferred but t
   - `codes` table (`id`, `user_id`, `code` text of 1-3 digits, `text` up to 200 chars, no leading/trailing whitespace). Unique per user on `code`, and on `lower(text)` for non-blank text only (blank rows may repeat). Rows are created only when a user sets a code and are **never deleted by the app** (clearing blanks the text; switching systems leaves other-system rows alone; only deleting the account cascades).
   - API: `GET /api/codes` (all of the user's rows) and `PUT /api/codes/:code` `{ text }` (trims; blank never creates a row; code must fit the user's system; 409 names the code already using that text). There is deliberately no DELETE.
   - Client: `codes.tsx` (`useCodes()`: loaded once after login; "set" = row exists and text not blank), `toast.tsx` (`useToast()`), `CodesGate` (waits for codes). Edit sub-tab (`/codes/edit`, `?code=42` opens the editor, autofilled for set codes; Cancel only asks "Discard what you typed?" when the text differs from what loaded) and All Codes sub-tab (grids by system, lazily drawn, set tiles drawn as set, tiles open the editor).
+- **Drill sub-tab, built (first draft):** `/codes/drill` with a mode switch. "Code → Description" works: a random set code (only codes set and within the user's current system) is shown, the box only accepts letters continuing its saved text (case-insensitive, whitespace squeezed to one space), and it scores as soon as the typed start belongs to that text alone (trie in `client/src/drill/trie.ts`) or the full text is typed; 60-second round, then score + Try again; the tile jiggles on a score. Nothing is saved yet. "Description → Code" shows "Under construction".
 - Admin is created only with the server script (`docker compose exec app node server/dist/scripts/make-admin.js <username-or-email>` in `~/memodeum` on the VPS), never through the website.
 - Hosting: IONOS VPS (Ubuntu 24.04), Docker Compose (Postgres 16, app, Caddy with automatic HTTPS), Porkbun domain. See README.
 - Run `git log --oneline -10` and check open PRs (`gh api repos/danielvance1/memory_app/pulls`) to confirm nothing has changed since this was written.
@@ -60,7 +61,8 @@ Lower priority: email verification (Resend, free tier; explicitly deferred but t
 ## Next tasks
 
 - Images for codes (open question for Daniel: upload to the VPS disk vs. an image link; text-only is done).
-- Code drills, then memory drills (see "The three critical features").
+- Drill: build "Description → Code" (the reverse game, same rules); decide whether to save scores / show progress (needs a table).
+- Memory drills (see "The three critical features").
 - Known small gap: the "Discard what you typed?" confirmation only covers the Cancel button; leaving via a tab or the browser Back button drops unsaved text silently. Switching the code system while editing a code outside the new system closes the editor.
 
 Also pending: the deploy workflow's final health check can show a false red X on a first deploy while Caddy obtains its certificate; making it retry longer is a small improvement.
