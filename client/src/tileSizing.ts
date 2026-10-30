@@ -67,3 +67,16 @@ export function drillTileSize(width: number, height: number): number {
   const wanted = Math.min(width * 0.45, height * 0.3);
   return Math.max(0, Math.floor(Math.min(Math.max(wanted, 56), 160, width)));
 }
+
+/** Space between the tiles in the Test Memory carousel. */
+export const MEMORY_GAP = 12;
+
+/**
+ * The tile in the Test Memory carousel. Three tiles (the one being shown and a
+ * neighbor on each side) plus two gaps have to fit across the width, and it
+ * shouldn't take much more than a third of the height.
+ */
+export function memoryTileSize(width: number, height: number): number {
+  const byWidth = Math.floor((width - 2 * MEMORY_GAP) / 3);
+  return Math.max(0, Math.min(byWidth, Math.floor(height * 0.35), 160));
+}

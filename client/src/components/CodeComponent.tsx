@@ -42,6 +42,8 @@ interface CodeComponentProps {
   size?: number | string;
   /** Set to false to never show the small label above the digits (for example, on a tile that isn't clickable). */
   showLabel?: boolean;
+  /** Set to false to keep the tile out of the Tab key's path (for tiles that are only there to look at). */
+  tabbable?: boolean;
   className?: string;
 }
 
@@ -51,6 +53,7 @@ export default function CodeComponent({
   onClick,
   size = "4rem",
   showLabel = true,
+  tabbable = true,
   className = "",
 }: CodeComponentProps) {
   const length = typeof size === "number" ? `${size}px` : size;
@@ -82,6 +85,7 @@ export default function CodeComponent({
   return (
     <button
       type="button"
+      tabIndex={tabbable ? undefined : -1}
       onClick={onClick}
       onPointerEnter={(e) => setPointerOver(e.pointerType !== "touch")}
       onPointerLeave={() => setPointerOver(false)}
