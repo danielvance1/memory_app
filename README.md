@@ -152,7 +152,9 @@ IMAGE_TAG=<old-tag> docker compose up -d   # roll back to an earlier release
 
 ## Not built yet
 
-The login, signup, and admin screens (the API for them exists), email
-verification and password reset, the database tables for codes and drills, the
-three core features above, and a PWA manifest. The site currently shows just the
-Memodeum header; `GET /api/health` reports whether the server and database are up.
+Email verification and password reset, the database tables and screens for codes
+and drills (the three core features above), a PWA manifest, and the MCP server.
+The site has the header, login, signup, and the admin user grid;
+`GET /api/health` reports whether the server and database are up.
+
+Working on this repo with Claude? Start from [CLAUDE.md](CLAUDE.md).
