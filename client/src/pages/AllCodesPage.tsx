@@ -1,7 +1,9 @@
 import { useCallback, useRef } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../auth";
+import { useCodes } from "../codes";
 import CodeSection, { COLUMNS, GAP } from "../components/CodeSection";
+import CodesGate from "../components/CodesGate";
 import { useAreaSize } from "../useAreaSize";
 
 // Tiles never get bigger than this, even on a wide screen.
@@ -44,13 +46,13 @@ function sectionsFor(codeSystem: number): Section[] {
 }
 
 // "All Codes" sub-tab: every code in the user's code system, grouped under
-// headers. For now they are all unset because codes can't be saved yet.
-// Tapping one opens it in the Edit tab.
+// headers. Codes the user has set are drawn as set. Tapping one opens it in the Edit tab.
 export default function AllCodesPage() {
   const areaRef = useRef<HTMLElement>(null);
   const { width } = useAreaSize(areaRef);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isSet } = useCodes();
 
   // Tapping a tile opens the Edit tab on that code (the code rides in the address).
   const openInEditor = useCallback((digits: string) => navigate(`/codes/edit?code=${digits}`), [navigate]);
@@ -61,19 +63,24 @@ export default function AllCodesPage() {
 
   return (
     <section ref={areaRef} aria-label="All codes" className="flex flex-col gap-8">
-      {/* Wait for the first measurement so the tiles are built at the right size once. */}
-      {tileSize > 0 &&
-        sections.map((s) => (
-          <CodeSection
-            key={s.title}
-            title={s.title}
-            start={s.start}
-            count={s.count}
-            digitWidth={s.digitWidth}
-            tileSize={tileSize}
-            onSelect={openInEditor}
-          />
-        ))}
+      {/* Wait for the first measurement so the tiles are built at the right size once,
+          and for the user's codes, so no tile flips from "not set" to "set" after appearing. */}
+      {tileSize > 0 && (
+        <CodesGate>
+          {sections.map((s) => (
+            <CodeSection
+              key={s.title}
+              title={s.title}
+              start={s.start}
+              count={s.count}
+              digitWidth={s.digitWidth}
+              tileSize={tileSize}
+              isSet={isSet}
+              onSelect={openInEditor}
+            />
+          ))}
+        </CodesGate>
+      )}
     </section>
   );
 }

@@ -5,6 +5,7 @@ import { loadConfig, type AppConfig } from "./config";
 import { loadUser } from "./auth/middleware";
 import { adminRouter } from "./routes/admin";
 import { authRouter } from "./routes/auth";
+import { codesRouter } from "./routes/codes";
 import { healthRouter } from "./routes/health";
 import { meRouter } from "./routes/me";
 
@@ -32,6 +33,7 @@ export function createApp(config: AppConfig = loadConfig()): Express {
   app.use("/api/auth", authRouter(config));
   app.use("/api/admin", adminRouter(config));
   app.use("/api/me", meRouter());
+  app.use("/api/codes", codesRouter());
 
   // Any other /api/... URL is a JSON 404 (not the React page).
   app.use("/api", (_req, res) => {

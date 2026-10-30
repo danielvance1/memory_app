@@ -31,11 +31,13 @@ interface CodeSectionProps {
   digitWidth: number;
   /** The width and height of every tile, in pixels. */
   tileSize: number;
+  /** Whether a code has been set; set tiles are drawn as set. */
+  isSet: (digits: string) => boolean;
   /** Called with the tile's digits (like "042") when a tile is tapped. */
   onSelect?: (digits: string) => void;
 }
 
-export default function CodeSection({ title, start, count, digitWidth, tileSize, onSelect }: CodeSectionProps) {
+export default function CodeSection({ title, start, count, digitWidth, tileSize, isSet, onSelect }: CodeSectionProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const near = useNearViewport(boxRef);
 
@@ -57,7 +59,7 @@ export default function CodeSection({ title, start, count, digitWidth, tileSize,
                 <CodeComponent
                   key={i}
                   digits={digits}
-                  isSet={false}
+                  isSet={isSet(digits)}
                   size={tileSize}
                   onClick={onSelect ? () => onSelect(digits) : undefined}
                 />
