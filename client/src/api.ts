@@ -5,6 +5,7 @@ export interface User {
   username: string;
   email: string;
   isAdmin: boolean;
+  codeSystem: number; // 1, 2 or 3 digits per code
 }
 
 // What went wrong, in a form the screens can show to a person.
@@ -20,7 +21,7 @@ export class ApiError extends Error {
 }
 
 interface RequestOptions {
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "PUT";
   body?: unknown;
   signal?: AbortSignal;
 }

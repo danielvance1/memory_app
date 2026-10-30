@@ -36,15 +36,23 @@ export async function createSession(
 }
 
 export async function findUserBySessionToken(token: string): Promise<AuthUser | null> {
-  const { rows } = await pool.query<{ id: number; username: string; email: string; is_admin: boolean }>(
-    `SELECT u.id, u.username, u.email, u.is_admin
+  const { rows } = await pool.query<{
+    id: number;
+    username: string;
+    email: string;
+    is_admin: boolean;
+    code_system: number;
+  }>(
+    `SELECT u.id, u.username, u.email, u.is_admin, u.code_system
        FROM sessions s
        JOIN users u ON u.id = s.user_id
       WHERE s.token_hash = $1 AND s.expires_at > now()`,
     [hashToken(token)],
   );
   const row = rows[0];
-  return row ? { id: row.id, username: row.username, email: row.email, isAdmin: row.is_admin } : null;
+  return row
+    ? { id: row.id, username: row.username, email: row.email, isAdmin: row.is_admin, codeSystem: row.code_system }
+    : null;
 }
 
 export async function deleteSession(token: string): Promise<void> {

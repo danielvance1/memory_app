@@ -4,6 +4,7 @@ export interface AuthUser {
   username: string;
   email: string;
   isAdmin: boolean;
+  codeSystem: number; // 1, 2 or 3 digits per code
 }
 
 // Teach TypeScript that Express requests may carry a `user`. After this,
