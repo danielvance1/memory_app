@@ -28,6 +28,39 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
 
+  # Runs the server's automated tests against a real PostgreSQL database.
+  server-tests:
+    name: Server tests (real Postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: memodeum
+          POSTGRES_PASSWORD: ci-password
+          POSTGRES_DB: memodeum_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U memodeum -d memodeum_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: server
+    env:
+      TEST_DATABASE_URL: postgres://memodeum:ci-password@localhost:5432/memodeum_test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - run: npm test
+
   client:
     name: Client typecheck + build
     runs-on: ubuntu-latest
@@ -87,6 +120,29 @@ jobs:
           curl --fail --silent --show-error http://localhost:3000/some/deep/link | grep -q 'id="root"'
           echo "Unknown API routes return 404:"
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://localhost:3000/api/nope)" = "404"
+
+          # Accounts, inside the real production image. This is the check that the
+          # password-hashing library has a working build for the Alpine Linux image,
+          # and that the migrations were included in it.
+          echo "Sign up, then use the session cookie:"
+          curl --fail-with-body --silent --show-error --cookie-jar jar.txt \
+            --header 'content-type: application/json' \
+            --data '{"username":"smoke_test","email":"smoke@example.com","password":"smoke-test-password"}' \
+            http://localhost:3000/api/auth/signup | tee /dev/stderr | grep -q '"username":"smoke_test"'
+          echo
+          curl --fail --silent --show-error --cookie jar.txt http://localhost:3000/api/auth/me \
+            | tee /dev/stderr | grep -q '"username":"smoke_test"'
+          echo
+          echo "Not an admin yet, so the admin list is refused:"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' --cookie jar.txt http://localhost:3000/api/admin/users)" = "403"
+          echo "Promote with the make-admin script that ships in the image, then the list works:"
+          docker exec smoke node server/dist/scripts/make-admin.js smoke_test
+          curl --fail --silent --show-error --cookie jar.txt http://localhost:3000/api/admin/users \
+            | tee /dev/stderr | grep -q '"email":"smoke@example.com"'
+          echo
+          echo "Log out, and the cookie stops working:"
+          curl --fail --silent --show-error --cookie jar.txt --request POST http://localhost:3000/api/auth/logout
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' --cookie jar.txt http://localhost:3000/api/admin/users)" = "401"
 
       - name: Show container logs on failure
         if: failure()
