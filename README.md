@@ -115,6 +115,15 @@ docker compose exec app node server/dist/scripts/make-admin.js <username-or-emai
 - **Pushing to `rel` deploys to <https://memodeum.com>.** To release, merge `main`
   into `rel` (for example, open a PR from `main` into `rel`, or
   `git push origin main:rel` for a fast-forward).
+- **Default release flow (Claude does all of this, nobody needs to click merge):**
+  1. Open a PR from the feature branch into `main`.
+  2. Wait for CI on that PR to pass, then merge it into `main`.
+  3. Open a PR from `main` into `rel`.
+  4. Wait for CI on that PR to pass, then merge it into `rel`. That deploys.
+  5. Watch the Deploy workflow and confirm it finishes green.
+
+  If CI fails at any stage, stop, fix it, and don't merge. Nothing is ever pushed
+  straight to `main` or `rel`; both only change through PRs.
 
 What a deploy does (`.github/workflows/deploy.yml`):
 

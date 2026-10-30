@@ -19,8 +19,15 @@ Lower priority: email verification (Resend, free tier; explicitly deferred but t
 
 ## Working agreement (important)
 
-- Claude writes code and opens pull requests. **Daniel reviews and merges, and does every account-side step himself** (servers, DNS, GitHub secrets, settings). Do not ask him to hand-copy files. Give him exact steps for anything only he can do.
-- Branches: feature branch, then a PR into `main`. Merging `main` into `rel` deploys to memodeum.com via GitHub Actions. Never push to `main` or `rel` directly.
+- Claude writes code, opens pull requests, **and merges them itself, all the way to production** (Daniel's standing instruction as of 2026-10-29; he knows a merge to `rel` redeploys the live server). **Daniel does every account-side step himself** (servers, DNS, GitHub secrets, settings). Do not ask him to hand-copy files. Give him exact steps for anything only he can do.
+- Release flow, every time, unless Daniel says otherwise for a specific change:
+  1. Feature branch, then open a PR into `main`.
+  2. Wait for CI on that PR to pass, then merge it into `main`.
+  3. Open a PR from `main` into `rel`.
+  4. Wait for CI on that PR to pass, then merge it into `rel`. That deploys to memodeum.com via GitHub Actions.
+  5. Watch the Deploy workflow and confirm it finishes green, then tell Daniel.
+  - If CI fails at any stage, stop, fix it, and don't merge. Never push to `main` or `rel` directly; they only change through PRs.
+  - GitHub GraphQL is blocked in Claude sessions, so `gh pr create`/`gh pr merge`/`gh pr checks` fail. Use the REST API (`gh api repos/danielvance1/memory_app/pulls ...`, `PUT .../pulls/N/merge`, `.../commits/SHA/check-runs`).
 - When explaining code to Daniel: show it in chunks (not strictly line by line), then say what each chunk does, including the syntax.
 - Verify before claiming done. Past work was checked with integration tests, mutation ("sabotage") checks that the tests actually fail when a rule is broken, the real Docker image, and a real-browser walkthrough at phone size.
 - End commits with the attribution trailers the session gives you.
@@ -34,12 +41,13 @@ Lower priority: email verification (Resend, free tier; explicitly deferred but t
 - Protect routes with `requireAuth` / `requireAdmin` (`server/src/auth/middleware.ts`); the logged-in user is `req.user`. **Always scope data queries by `req.user.id`** so people only see their own codes and drills.
 - New tables: add a new migration file; never edit an old one.
 - Mobile first, always: tap targets at least 44px (`min-h-11`/`min-h-12`), inputs at least 16px (stops iOS zoom), no sideways page scrolling down to 320px wide, `100dvh`, safe-area insets. Shared styles: `client/src/components/ui.ts`; form fields: `TextField`.
+- Colors: shared colors live in `client/src/theme.css` as Tailwind `@theme` tokens named by role (`accent`, `tile`, `muted` give `bg-accent`, `text-tile`, `text-muted`...). Use these in new work instead of raw Tailwind colors. Only `CodeComponent` uses them so far; the rest of the app (backgrounds, buttons, tabs, forms) will move over piece by piece, only when Daniel asks. Reusable pieces so far: `CodeComponent`, `TypedText` (types text out character by character).
 - Client talks to the server only through `client/src/api.ts` (`api<T>()`, `ApiError` with `field`/`code`); login state is `useAuth()` from `client/src/auth.tsx`. Pages live in `client/src/pages/`, routes in `client/src/App.tsx`, the frame (title and account bar) in `components/Layout.tsx`.
 - Tests: `cd server && npm test` needs `TEST_DATABASE_URL` pointing at a throwaway Postgres (tests empty its tables). CI runs server typecheck/build, server tests against real Postgres, client typecheck/build, and a Docker smoke test.
 
 ## Where things stand (as of 2026-10-29)
 
-- Merged to `main`: the accounts API (signup, login, logout, /me), sessions, the 500-user hard cap, rate limits, the admin user list API, the `make-admin` script, and the login, signup and admin-grid screens with the account bar. Daniel merges `main` into `rel` to deploy.
+- Merged to `main`: the accounts API (signup, login, logout, /me), sessions, the 500-user hard cap, rate limits, the admin user list API, the `make-admin` script, and the login, signup and admin-grid screens with the account bar. Claude merges `main` into `rel` to deploy (see the release flow above).
 - Admin is created only with the server script (`docker compose exec app node server/dist/scripts/make-admin.js <username-or-email>` in `~/memodeum` on the VPS), never through the website.
 - Hosting: IONOS VPS (Ubuntu 24.04), Docker Compose (Postgres 16, app, Caddy with automatic HTTPS), Porkbun domain. See README.
 - Run `git log --oneline -10` and check open PRs (`gh api repos/danielvance1/memory_app/pulls`) to confirm nothing has changed since this was written.
