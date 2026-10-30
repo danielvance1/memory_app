@@ -17,7 +17,7 @@ Mobile-first, hosted at <https://memodeum.com>.
 
 | Part | Technology |
 | --- | --- |
-| API | Node 22, TypeScript, Express 5, `pg` (hand-written SQL, no ORM) |
+| API | Node 22, TypeScript, Express 5, `pg` (hand-written SQL, no ORM), `node-pg-migrate` for the schema, argon2id password hashing |
 | Database | PostgreSQL 16 |
 | Web app | React 19, TypeScript, Tailwind CSS 4, built with Vite |
 | Hosting | One small VPS running Docker Compose, with Caddy for automatic HTTPS |
@@ -56,18 +56,62 @@ npm run dev
 The Vite dev server proxies `/api` requests to the API, so the web app on
 `:5173` talks to the API on `:3000` with no extra setup.
 
+The API creates its database tables itself when it starts (see
+`server/migrations/`), so there is no separate setup step for the database.
+
 Checks that CI runs (run them yourself before pushing):
 
 ```bash
 cd server && npm run typecheck && npm run build
 cd client && npm run build   # typechecks, then builds
+
+# Server tests need a separate throwaway database (the tests empty its tables).
+# Create it once, then run them:
+docker compose -f docker-compose.dev.yml exec db createdb -U memodeum memodeum_test
+cd server
+TEST_DATABASE_URL=postgres://memodeum:devpassword@localhost:5432/memodeum_test npm test
+```
+
+## Accounts
+
+Sign up and log in with a username or an email (either works at login). Logins
+are cookie sessions: the browser holds a random token, the database holds only
+a hash of it, and logging out ends the session on the server.
+
+Safety limits, all in `server/src/config.ts` and overridable with environment
+variables (see `server/.env.example`):
+
+| Limit | Default | What it protects against |
+| --- | --- | --- |
+| `MAX_USERS` | 500 | Hard cap on total accounts. Once reached, sign-ups are refused. |
+| `SIGNUPS_PER_HOUR_PER_IP` | 5 | One address creating accounts in bulk (and filling the cap). |
+| `FAILED_LOGINS_PER_IP` | 10 per 15 min | Password guessing from one address. |
+| `FAILED_LOGINS_PER_ACCOUNT` | 20 per 15 min | Password guessing against one account from many addresses. |
+
+To change the cap on the live site, add `MAX_USERS=<number>` to `~/memodeum/.env`
+on the server and run `docker compose up -d` there.
+
+There is no email verification or password reset yet (the `users` table already
+has an `email_verified_at` column for it). A forgotten password currently needs
+a manual fix in the database.
+
+### Admins
+
+Admins can see everyone's username, email, and last login (`GET /api/admin/users`;
+the admin page on the site is coming next). There is deliberately no way to become
+an admin through the website. Run this on the server, in `~/memodeum`:
+
+```bash
+docker compose exec app node server/dist/scripts/make-admin.js <username-or-email>
+docker compose exec app node server/dist/scripts/make-admin.js <username-or-email> --remove
 ```
 
 ## Branches and deploying
 
 - Work happens on feature branches and lands on **`main`** through pull requests.
-  CI runs on every PR: typecheck + build for both halves, plus a test that builds
-  the production Docker image and boots it against a real Postgres.
+  CI runs on every PR: typecheck + build for both halves, the server tests against
+  a real Postgres, plus a test that builds the production Docker image, boots it,
+  and signs up a user in it.
 - **Pushing to `rel` deploys to <https://memodeum.com>.** To release, merge `main`
   into `rel` (for example, open a PR from `main` into `rel`, or
   `git push origin main:rel` for a fast-forward).
@@ -108,6 +152,7 @@ IMAGE_TAG=<old-tag> docker compose up -d   # roll back to an earlier release
 
 ## Not built yet
 
-Accounts and email confirmation, the database schema (codes, drills), the three
-core features above, and a PWA manifest. The site currently shows just the
+The login, signup, and admin screens (the API for them exists), email
+verification and password reset, the database tables for codes and drills, the
+three core features above, and a PWA manifest. The site currently shows just the
 Memodeum header; `GET /api/health` reports whether the server and database are up.
