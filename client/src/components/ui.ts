@@ -8,6 +8,8 @@ export const primaryButton = `inline-flex min-h-12 w-full items-center justify-c
 
 export const secondaryButton = `inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-slate-600 px-5 text-base font-semibold text-slate-100 transition hover:bg-slate-800 active:bg-slate-700 ${focusRing}`;
 
+export const dangerButton = `inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-rose-600 px-5 text-base font-semibold text-white transition hover:bg-rose-500 active:bg-rose-700 ${focusRing}`;
+
 export const navButton = `inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-slate-200 transition hover:bg-slate-800 active:bg-slate-700 ${focusRing}`;
 
 export const inputField = `block min-h-12 w-full rounded-xl border bg-slate-800 px-4 text-base text-slate-100 placeholder:text-slate-500 focus:outline-2 focus:outline-offset-0 focus:outline-indigo-400/50`;
