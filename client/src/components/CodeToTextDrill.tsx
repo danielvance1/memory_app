@@ -4,13 +4,15 @@ import { useAuth } from "../auth";
 import { useCodes } from "../codes";
 import { buildTrie, isUniquelyIdentified, normalizeText, type Trie } from "../drill/trie";
 import { nextTyped } from "../drill/typing";
+import Celebration from "./Celebration";
 import CodeComponent from "./CodeComponent";
 import { inputField, primaryButton, textLink } from "./ui";
 
 // The "code to description" drill. A code is shown; the user types the text
 // they saved for it. The box only accepts letters that continue the real
 // text, and as soon as what's typed can only mean that one code (see
-// drill/trie.ts) it scores and a new random code appears. One round lasts a minute.
+// drill/trie.ts) it scores: confetti flies out of the tile, the full correct
+// answer is shown, and a new random code appears. One round lasts a minute.
 //
 // Only codes that are set, and fit the user's current code system, are used.
 
@@ -20,6 +22,8 @@ interface Item {
   code: string;
   /** The saved text, lowercased with whitespace squeezed (what has to be typed). */
   target: string;
+  /** The saved text as the user wrote it (capital letters kept), whitespace squeezed. For showing the answer. */
+  display: string;
 }
 
 type Phase = "idle" | "running" | "finished";
@@ -41,7 +45,11 @@ export default function CodeToTextDrill() {
     () =>
       entries
         .filter((entry) => entry.code.length <= system)
-        .map((entry) => ({ code: entry.code, target: normalizeText(entry.text) }))
+        .map((entry) => ({
+          code: entry.code,
+          target: normalizeText(entry.text),
+          display: entry.text.replace(/\s+/g, " ").trim(),
+        }))
         .filter((item) => item.target !== ""),
     [entries, system],
   );
@@ -54,7 +62,8 @@ export default function CodeToTextDrill() {
   const [typed, setTyped] = useState("");
   const [score, setScore] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(ROUND_SECONDS);
-  const [jiggles, setJiggles] = useState(0); // goes up on every score; used to restart the animation
+  const [answered, setAnswered] = useState<Item | null>(null); // the code just scored, so its full answer can be shown
+  const [bursts, setBursts] = useState(0); // goes up on every score; a new number makes a fresh burst of confetti
   const endsAt = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -66,7 +75,8 @@ export default function CodeToTextDrill() {
     setCurrent(pick(available));
     setTyped("");
     setScore(0);
-    setJiggles(0);
+    setAnswered(null);
+    setBursts(0);
     setSecondsLeft(ROUND_SECONDS);
     endsAt.current = Date.now() + ROUND_SECONDS * 1000;
     setPhase("running");
@@ -93,9 +103,10 @@ export default function CodeToTextDrill() {
     const next = nextTyped(typed, event.target.value, current.target);
     if (isUniquelyIdentified(trie, next, current.target)) {
       setScore((s) => s + 1);
-      setCurrent(pick(pool)); // may be the same code again; the jiggle shows it counted
+      setAnswered(current);
+      setCurrent(pick(pool)); // may be the same code again; the confetti shows it counted
       setTyped("");
-      setJiggles((n) => n + 1);
+      setBursts((n) => n + 1);
     } else {
       setTyped(next);
     }
@@ -136,9 +147,24 @@ export default function CodeToTextDrill() {
               {formatTime(secondsLeft)}
             </p>
           </div>
-          {/* Tapping the tile must not take the keyboard away from the text box. */}
-          <div key={jiggles} className={jiggles > 0 ? "animate-jiggle" : ""} onMouseDown={(e) => e.preventDefault()}>
+          {/* The full correct answer for the code you just got, above everything else so a phone keyboard
+              doesn't cover it. Not shown when the same code comes up again, since that would give away its answer. */}
+          <div className="min-h-14 w-full" aria-live="polite">
+            {answered && current && answered.code !== current.code && (
+              <p key={bursts} className="rounded-xl bg-accent/15 px-4 py-2 text-center text-sm text-slate-100 break-words">
+                <span className="font-semibold text-accent">Correct!</span> Code {answered.code}: {answered.display}
+              </p>
+            )}
+          </div>
+          {/* Tapping the tile must not take the keyboard away from the text box. The key makes a new tile
+              (and so a fresh burst of confetti) for every score. */}
+          <div
+            key={bursts}
+            className={`relative ${bursts > 0 ? "celebrate-flash" : ""}`}
+            onMouseDown={(e) => e.preventDefault()}
+          >
             {current && <CodeComponent digits={current.code} isSet size="min(45vw, 10rem)" showLabel={false} />}
+            {bursts > 0 && <Celebration />}
           </div>
         </>
       )}
