@@ -22,18 +22,25 @@ const SIGNUP_LOCK_ID = 7_300_500;
 
 // Two fixed queries rather than building SQL from text: usernames can't contain
 // "@" and emails always do, so the identifier tells us which column to search.
-const FIND_BY_EMAIL = `SELECT id, username, email, password_hash, is_admin FROM users WHERE lower(email) = lower($1)`;
-const FIND_BY_USERNAME = `SELECT id, username, email, password_hash, is_admin FROM users WHERE lower(username) = lower($1)`;
+const FIND_BY_EMAIL = `SELECT id, username, email, password_hash, is_admin, code_system FROM users WHERE lower(email) = lower($1)`;
+const FIND_BY_USERNAME = `SELECT id, username, email, password_hash, is_admin, code_system FROM users WHERE lower(username) = lower($1)`;
 
 interface UserRow {
   id: number;
   username: string;
   email: string;
   is_admin: boolean;
+  code_system: number;
 }
 
 function publicUser(row: UserRow) {
-  return { id: row.id, username: row.username, email: row.email, isAdmin: row.is_admin };
+  return {
+    id: row.id,
+    username: row.username,
+    email: row.email,
+    isAdmin: row.is_admin,
+    codeSystem: row.code_system,
+  };
 }
 
 function tooManyRequests(_req: Request, res: Response): void {
@@ -111,7 +118,7 @@ export function authRouter(config: AppConfig): Router {
       const inserted = await client.query<UserRow>(
         `INSERT INTO users (username, email, password_hash, last_login_at)
          VALUES ($1, $2, $3, now())
-         RETURNING id, username, email, is_admin`,
+         RETURNING id, username, email, is_admin, code_system`,
         [username, email, passwordHash],
       );
       const user = inserted.rows[0];

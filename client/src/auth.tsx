@@ -12,6 +12,8 @@ interface AuthContextValue {
   login(identifier: string, password: string): Promise<void>;
   signup(username: string, email: string, password: string): Promise<void>;
   logout(): Promise<void>;
+  /** Saves the user's code system (1, 2 or 3) on the server, then updates the screen. */
+  setCodeSystem(codeSystem: number): Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -52,7 +54,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null); // only after the server confirmed, so we never claim "logged out" falsely
   }, []);
 
-  const value = useMemo(() => ({ loading, user, login, signup, logout }), [loading, user, login, signup, logout]);
+  const setCodeSystem = useCallback(async (codeSystem: number) => {
+    const reply = await api<{ user: User }>("/api/me/code-system", { method: "PUT", body: { codeSystem } });
+    setUser(reply.user); // only after the server confirmed, so the screen never shows an unsaved change
+  }, []);
+
+  const value = useMemo(
+    () => ({ loading, user, login, signup, logout, setCodeSystem }),
+    [loading, user, login, signup, logout, setCodeSystem],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
