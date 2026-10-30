@@ -1,16 +1,13 @@
 @import "tailwindcss";
 @import "./theme.css";
 
-/* The drill tile "jiggles" when you score, so you can see something happened.
-   People who ask their device for less motion get a brief brightening instead. */
-@keyframes jiggle {
-  0% { transform: translateX(0) rotate(0); }
-  15% { transform: translateX(-6px) rotate(-6deg); }
-  30% { transform: translateX(5px) rotate(5deg); }
-  45% { transform: translateX(-4px) rotate(-4deg); }
-  60% { transform: translateX(3px) rotate(3deg); }
-  75% { transform: translateX(-2px) rotate(-2deg); }
-  100% { transform: translateX(0) rotate(0); }
+/* When you score in the drill, confetti flies out of the tile (components/Celebration.tsx).
+   Each piece gets its own direction, size and color from custom properties. People who ask
+   their device for less motion get no confetti, only a brief brightening of the tile. */
+@keyframes burst {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  65% { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.4); opacity: 0; }
 }
 
 @keyframes flash {
@@ -18,12 +15,23 @@
   100% { filter: brightness(1); }
 }
 
-.animate-jiggle {
-  animation: jiggle 0.45s ease-in-out;
+.particle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--size);
+  height: var(--size);
+  margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
+  background: var(--color);
+  border-radius: var(--radius);
+  animation: burst 0.85s cubic-bezier(0.2, 0.7, 0.3, 1) var(--delay) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-jiggle {
+  .particle {
+    display: none;
+  }
+  .celebrate-flash {
     animation: flash 0.45s ease-out;
   }
 }
