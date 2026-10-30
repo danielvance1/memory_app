@@ -5,6 +5,7 @@ import { useAuth } from "../auth";
 const subTabs = [
   { to: "edit", label: "Edit" },
   { to: "all", label: "All Codes" },
+  { to: "drill", label: "Drill" },
 ];
 
 // The frame for everything under /codes: a row of sub-tabs, then whichever

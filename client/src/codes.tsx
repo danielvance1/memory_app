@@ -23,6 +23,8 @@ interface CodesContextValue {
   isSet(code: string): boolean;
   /** The saved text for a code, or "" when there is none. */
   getText(code: string): string;
+  /** Every row the user has, set or blank, in no particular order. */
+  entries: CodeRow[];
   /** Saves text for a code on the server, then updates the screen. Returns the text as saved (trimmed). */
   saveText(code: string, text: string): Promise<string>;
 }
@@ -74,6 +76,7 @@ export function CodesProvider({ children }: { children: ReactNode }) {
       reload,
       isSet: (code) => (texts[code] ?? "").trim() !== "",
       getText: (code) => texts[code] ?? "",
+      entries: Object.entries(texts).map(([code, text]) => ({ code, text })),
       saveText,
     }),
     [status, reload, texts, saveText],

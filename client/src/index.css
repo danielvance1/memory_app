@@ -1,2 +1,29 @@
 @import "tailwindcss";
 @import "./theme.css";
+
+/* The drill tile "jiggles" when you score, so you can see something happened.
+   People who ask their device for less motion get a brief brightening instead. */
+@keyframes jiggle {
+  0% { transform: translateX(0) rotate(0); }
+  15% { transform: translateX(-6px) rotate(-6deg); }
+  30% { transform: translateX(5px) rotate(5deg); }
+  45% { transform: translateX(-4px) rotate(-4deg); }
+  60% { transform: translateX(3px) rotate(3deg); }
+  75% { transform: translateX(-2px) rotate(-2deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+
+@keyframes flash {
+  0% { filter: brightness(1.7); }
+  100% { filter: brightness(1); }
+}
+
+.animate-jiggle {
+  animation: jiggle 0.45s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-jiggle {
+    animation: flash 0.45s ease-out;
+  }
+}

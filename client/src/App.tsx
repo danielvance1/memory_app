@@ -3,6 +3,7 @@ import Layout from "./components/Layout";
 import AdminPage from "./pages/AdminPage";
 import AllCodesPage from "./pages/AllCodesPage";
 import CodesPage from "./pages/CodesPage";
+import DrillPage from "./pages/DrillPage";
 import EditCodePage from "./pages/EditCodePage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
@@ -23,6 +24,7 @@ export default function App() {
           <Route index element={<Navigate to="edit" replace />} />
           <Route path="edit" element={<EditCodePage />} />
           <Route path="all" element={<AllCodesPage />} />
+          <Route path="drill" element={<DrillPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>
