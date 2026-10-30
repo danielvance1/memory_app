@@ -16,8 +16,8 @@ export default function DrillPage() {
   const [mode, setMode] = useState<Mode>("code-to-text");
 
   return (
-    <section aria-label="Drill" className="flex flex-col items-center gap-6">
-      <div role="group" aria-label="Drill mode" className="flex w-full max-w-sm gap-2">
+    <section aria-label="Drill" className="-mx-1 flex min-h-0 flex-1 flex-col items-center gap-3 overflow-y-auto px-1">
+      <div role="group" aria-label="Drill mode" className="flex w-full max-w-sm shrink-0 gap-2">
         {modes.map((m) => (
           <button
             key={m.id}
@@ -39,7 +39,7 @@ export default function DrillPage() {
         {mode === "code-to-text" ? (
           <CodeToTextDrill />
         ) : (
-          <p className="py-8 text-center text-lg text-slate-300">Under construction</p>
+          <p className="py-6 text-center text-lg text-slate-300">Under construction</p>
         )}
       </CodesGate>
     </section>

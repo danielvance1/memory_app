@@ -4,7 +4,12 @@
     <meta charset="UTF-8" />
     <!-- Mobile-first: render at the phone's real width, and let the page
          extend under the notch / home bar (we pad for it in CSS). -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- interactive-widget: when the on-screen keyboard opens, shrink the page to the room left
+         (so the fixed header stays put) instead of sliding the whole page up. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
     <meta name="theme-color" content="#0f172a" />
     <title>Memodeum</title>
   </head>

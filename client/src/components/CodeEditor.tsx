@@ -88,14 +88,15 @@ export default function CodeEditor({ digits, isSet, initialText, tileSize, sideB
   }
 
   return (
-    <div className={`flex w-full ${sideBySide ? "flex-row items-start gap-6" : "flex-col items-center gap-5"}`}>
-      <div className="flex shrink-0 flex-col items-center gap-2">
+    // Fills the room the page gives it. The text box below takes whatever height the rest leaves over.
+    <div className={`flex min-h-0 w-full flex-1 ${sideBySide ? "flex-row items-start gap-6" : "flex-col items-center gap-3"}`}>
+      <div className="flex shrink-0 flex-col items-center gap-1">
         <p className="text-sm font-medium text-muted">Currently editing</p>
         {/* Not clickable, so no "click to set" label on hover. */}
         <CodeComponent digits={digits} isSet={isSet} size={tileSize} showLabel={false} />
       </div>
 
-      <div className="flex w-full min-w-0 flex-1 flex-col gap-3">
+      <div className={`flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2 ${sideBySide ? "max-h-full" : ""}`}>
         <label htmlFor="code-text" className="sr-only">
           What code {digits} stands for
         </label>
@@ -106,15 +107,15 @@ export default function CodeEditor({ digits, isSet, initialText, tileSize, sideB
           onChange={handleChange}
           readOnly={saving}
           maxLength={MAX_TEXT_LENGTH}
-          rows={5}
-          className={`${inputField} resize-none border-slate-600 py-3`}
+          rows={2}
+          className={`${inputField} min-h-[4.5rem] flex-1 resize-none border-slate-600 py-3 ${sideBySide ? "max-h-64" : ""}`}
         />
-        <p className="text-right text-sm text-muted" aria-live="off">
+        <p className="shrink-0 text-right text-sm leading-none text-muted" aria-live="off">
           ({text.length}/{MAX_TEXT_LENGTH})
         </p>
 
         {confirmingDiscard ? (
-          <div role="alertdialog" aria-label="Discard what you typed?" className="flex flex-col gap-3">
+          <div role="alertdialog" aria-label="Discard what you typed?" className="flex shrink-0 flex-col gap-2">
             <p className="text-center text-sm text-slate-200">Discard what you typed?</p>
             <div className="flex gap-3">
               <button type="button" className={dangerButton} onClick={onClose}>
@@ -126,7 +127,7 @@ export default function CodeEditor({ digits, isSet, initialText, tileSize, sideB
             </div>
           </div>
         ) : (
-          <div className="flex gap-3">
+          <div className="flex shrink-0 gap-3">
             <button type="button" className={primaryButton} disabled={!canSave} onClick={handleSave}>
               {saving ? "Saving…" : "Save"}
             </button>
@@ -137,7 +138,7 @@ export default function CodeEditor({ digits, isSet, initialText, tileSize, sideB
         )}
 
         {saveError && !confirmingDiscard && (
-          <p role="alert" className="text-center text-sm text-rose-300">
+          <p role="alert" className="shrink-0 text-center text-sm text-rose-300">
             {saveError}
           </p>
         )}
