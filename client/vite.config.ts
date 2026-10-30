@@ -1,9 +1,15 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Unit tests (npm test) cover the plain logic, such as the drill's rules; no browser needed.
+  test: {
+    include: ["src/**/*.test.ts"],
+    environment: "node",
+  },
   server: {
     port: 5173,
     // In development the page is served by Vite on :5173, but the API runs on
