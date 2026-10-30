@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { ApiError } from "../api";
 import { dangerButton, inputField, primaryButton, secondaryButton } from "./ui";
 import CodeComponent from "./CodeComponent";
 
@@ -6,34 +7,44 @@ import CodeComponent from "./CodeComponent";
 // narrow screens) and, next to it, a text box for what the code stands for,
 // with a (n/200) counter and Save / Cancel buttons.
 //
-// Cancel asks "Discard what you typed?" first, but only when there is text.
-// Save isn't connected to the database yet; it just says so.
+// The box starts out holding the code's saved text (empty for a code that
+// isn't set). Cancel asks "Discard what you typed?" only when the text now
+// differs from what the box started with, so opening a set code and cancelling
+// straight away just closes it.
 
 export const MAX_TEXT_LENGTH = 200;
 
 interface CodeEditorProps {
   digits: string;
+  /** Whether the code is already set, so the tile is drawn that way. */
+  isSet: boolean;
+  /** The saved text to start with ("" for a code that isn't set). */
+  initialText: string;
   /** Tile width and height in pixels. */
   tileSize: number;
   /** True: tile on the left, text box on the right. False: stacked, tile on top. */
   sideBySide: boolean;
-  /** Called when the user cancels (and, if there was text, confirmed discarding it). */
+  /** Saves the (trimmed) text. Should throw if saving fails; the message is shown under the buttons. */
+  onSave: (text: string) => Promise<void>;
+  /** Called when the user cancels (and, if they had changed the text, confirmed discarding it). */
   onClose: () => void;
 }
 
-export default function CodeEditor({ digits, tileSize, sideBySide, onClose }: CodeEditorProps) {
-  const [text, setText] = useState("");
+export default function CodeEditor({ digits, isSet, initialText, tileSize, sideBySide, onSave, onClose }: CodeEditorProps) {
+  const [text, setText] = useState(initialText);
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
-  const [showSaveNote, setShowSaveNote] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const boxRef = useRef<HTMLTextAreaElement>(null);
 
-  // Ready to type as soon as the editor opens, and refuse a typed space or
-  // Enter at the very start of the box before it even appears. (A native
-  // listener, because this is the one place that can stop the keystroke itself.)
+  // Ready to type as soon as the editor opens (with the cursor after any saved text), and
+  // refuse a typed space or Enter at the very start of the box before it even appears.
+  // (A native listener, because this is the one place that can stop the keystroke itself.)
   useEffect(() => {
     const box = boxRef.current;
     if (!box) return;
     box.focus();
+    box.setSelectionRange(box.value.length, box.value.length);
 
     function blockLeadingWhitespace(event: InputEvent) {
       if (!box || box.selectionStart !== 0) return;
@@ -50,12 +61,30 @@ export default function CodeEditor({ digits, tileSize, sideBySide, onClose }: Co
     // Anything else that sneaks in at the start (like pasted text) is trimmed here.
     // Spaces and new lines at the very start never show up and never count.
     setText(event.target.value.replace(/^\s+/, "").slice(0, MAX_TEXT_LENGTH));
-    setShowSaveNote(false);
+    setSaveError(null);
   }
 
+  // What would be saved: trailing spaces are dropped too.
+  const trimmed = text.trim();
+  // Something to save: the saved text would change (including clearing a set code).
+  const canSave = !saving && trimmed !== initialText;
+  // Something to lose: what's in the box differs from what it started with.
+  const hasChanges = text !== initialText;
+
   function handleCancel() {
-    if (text.length > 0) setConfirmingDiscard(true);
+    if (hasChanges) setConfirmingDiscard(true);
     else onClose();
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await onSave(trimmed); // on success the page leaves the editor, so there is nothing more to do here
+    } catch (err) {
+      setSaveError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
+      setSaving(false);
+    }
   }
 
   return (
@@ -63,7 +92,7 @@ export default function CodeEditor({ digits, tileSize, sideBySide, onClose }: Co
       <div className="flex shrink-0 flex-col items-center gap-2">
         <p className="text-sm font-medium text-muted">Currently editing</p>
         {/* Not clickable, so no "click to set" label on hover. */}
-        <CodeComponent digits={digits} isSet={false} size={tileSize} showLabel={false} />
+        <CodeComponent digits={digits} isSet={isSet} size={tileSize} showLabel={false} />
       </div>
 
       <div className="flex w-full min-w-0 flex-1 flex-col gap-3">
@@ -75,6 +104,7 @@ export default function CodeEditor({ digits, tileSize, sideBySide, onClose }: Co
           ref={boxRef}
           value={text}
           onChange={handleChange}
+          readOnly={saving}
           maxLength={MAX_TEXT_LENGTH}
           rows={5}
           className={`${inputField} resize-none border-slate-600 py-3`}
@@ -97,23 +127,18 @@ export default function CodeEditor({ digits, tileSize, sideBySide, onClose }: Co
           </div>
         ) : (
           <div className="flex gap-3">
-            <button
-              type="button"
-              className={primaryButton}
-              disabled={text.length === 0}
-              onClick={() => setShowSaveNote(true)}
-            >
-              Save
+            <button type="button" className={primaryButton} disabled={!canSave} onClick={handleSave}>
+              {saving ? "Saving…" : "Save"}
             </button>
-            <button type="button" className={secondaryButton} onClick={handleCancel}>
+            <button type="button" className={secondaryButton} disabled={saving} onClick={handleCancel}>
               Cancel
             </button>
           </div>
         )}
 
-        {showSaveNote && !confirmingDiscard && (
-          <p role="status" className="text-center text-sm text-muted">
-            Saving isn't hooked up yet.
+        {saveError && !confirmingDiscard && (
+          <p role="alert" className="text-center text-sm text-rose-300">
+            {saveError}
           </p>
         )}
       </div>

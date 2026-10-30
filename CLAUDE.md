@@ -48,19 +48,19 @@ Lower priority: email verification (Resend, free tier; explicitly deferred but t
 ## Where things stand (as of 2026-10-29)
 
 - Merged to `main`: the accounts API (signup, login, logout, /me), sessions, the 500-user hard cap, rate limits, the admin user list API, the `make-admin` script, and the login, signup and admin-grid screens with the account bar. Claude merges `main` into `rel` to deploy (see the release flow above).
+- **Codes tab, built:**
+  - `users.code_system` (1, 2 or 3 digits per code, default 1) with `PUT /api/me/code-system`; `codeSystem` is part of the user object.
+  - `codes` table (`id`, `user_id`, `code` text of 1-3 digits, `text` up to 200 chars, no leading/trailing whitespace). Unique per user on `code`, and on `lower(text)` for non-blank text only (blank rows may repeat). Rows are created only when a user sets a code and are **never deleted by the app** (clearing blanks the text; switching systems leaves other-system rows alone; only deleting the account cascades).
+  - API: `GET /api/codes` (all of the user's rows) and `PUT /api/codes/:code` `{ text }` (trims; blank never creates a row; code must fit the user's system; 409 names the code already using that text). There is deliberately no DELETE.
+  - Client: `codes.tsx` (`useCodes()`: loaded once after login; "set" = row exists and text not blank), `toast.tsx` (`useToast()`), `CodesGate` (waits for codes). Edit sub-tab (`/codes/edit`, `?code=42` opens the editor, autofilled for set codes; Cancel only asks "Discard what you typed?" when the text differs from what loaded) and All Codes sub-tab (grids by system, lazily drawn, set tiles drawn as set, tiles open the editor).
 - Admin is created only with the server script (`docker compose exec app node server/dist/scripts/make-admin.js <username-or-email>` in `~/memodeum` on the VPS), never through the website.
 - Hosting: IONOS VPS (Ubuntu 24.04), Docker Compose (Postgres 16, app, Caddy with automatic HTTPS), Porkbun domain. See README.
 - Run `git log --oneline -10` and check open PRs (`gh api repos/danielvance1/memory_app/pulls`) to confirm nothing has changed since this was written.
 
-## Next task: the "Codes" tab
+## Next tasks
 
-Goal: a logged-in user can see, add, edit and delete their codes.
-
-Suggested shape (confirm anything unclear with Daniel in one short question, then build):
-- Migration: `codes` table with `id`, `user_id` (FK to users, ON DELETE CASCADE), `digits` (text of 1 to 3 digits, CHECK `^[0-9]{1,3}$`), `text` (nullable), `image` (see below), timestamps, and a unique index on `(user_id, digits)`.
-- API under `/api/codes` (requireAuth, scoped to `req.user.id`): list, create, update, delete, with validation and tests (including "user A cannot see or change user B's codes").
-- Client: a "Codes" nav link, a list page (mobile-first), and add/edit forms.
-- Open question for Daniel: how images are stored (upload to the VPS disk vs. an image link). The default of text-only first, images in a follow-up PR, keeps the first PR small.
-- Also ask whether to allow codes of different lengths for the same starting digits (for example "1", "12", "123"); the unique index above allows it.
+- Images for codes (open question for Daniel: upload to the VPS disk vs. an image link; text-only is done).
+- Code drills, then memory drills (see "The three critical features").
+- Known small gap: the "Discard what you typed?" confirmation only covers the Cancel button; leaving via a tab or the browser Back button drops unsaved text silently. Switching the code system while editing a code outside the new system closes the editor.
 
 Also pending: the deploy workflow's final health check can show a false red X on a first deploy while Caddy obtains its certificate; making it retry longer is a small improvement.
