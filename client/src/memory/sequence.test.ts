@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_CODES, extendSequence, randomCode, scoreRecall } from "./sequence";
+import { MAX_CODES, extendSequence, pickCode, scoreRecall, usableCodes } from "./sequence";
 
 // A repeatable "random" so a failure can be reproduced.
 function seeded(seed: number): () => number {
@@ -10,73 +10,96 @@ function seeded(seed: number): () => number {
   };
 }
 
-describe("randomCode", () => {
-  it("has exactly the asked number of digits, and only digits", () => {
-    for (const digits of [1, 2, 3]) {
-      for (let seed = 1; seed <= 200; seed++) {
-        expect(randomCode(digits, seeded(seed))).toMatch(new RegExp(`^[0-9]{${digits}}$`));
-      }
-    }
+const POOL = ["1", "2", "42", "05", "174"];
+
+describe("usableCodes", () => {
+  it("keeps only codes that have text", () => {
+    expect(usableCodes([{ code: "1", text: "dog" }, { code: "2", text: "" }, { code: "3", text: "   " }], 3)).toEqual(["1"]);
   });
 
-  it("keeps leading zeros", () => {
-    expect(randomCode(3, () => 0)).toBe("000");
-    expect(randomCode(2, () => 0.05)).toBe("00");
+  it("keeps only codes that fit the current code system", () => {
+    const saved = [
+      { code: "1", text: "a" },
+      { code: "42", text: "b" },
+      { code: "174", text: "c" },
+    ];
+    expect(usableCodes(saved, 1)).toEqual(["1"]);
+    expect(usableCodes(saved, 2)).toEqual(["1", "42"]);
+    expect(usableCodes(saved, 3)).toEqual(["1", "42", "174"]);
   });
 
-  it("can make every digit, including 9, and never a 10", () => {
-    expect(randomCode(1, () => 0.9999999)).toBe("9");
+  it("treats 5 and 05 as different codes, and never lists a code twice", () => {
+    expect(usableCodes([{ code: "5", text: "a" }, { code: "05", text: "b" }], 2).sort()).toEqual(["05", "5"]);
+    expect(usableCodes([{ code: "5", text: "a" }, { code: "5", text: "b" }], 2)).toEqual(["5"]);
+  });
+
+  it("is empty when nothing is set", () => {
+    expect(usableCodes([], 3)).toEqual([]);
+    expect(usableCodes([{ code: "1", text: "" }], 3)).toEqual([]);
+  });
+});
+
+describe("pickCode", () => {
+  it("only ever picks codes from the pool", () => {
+    for (let seed = 1; seed <= 300; seed++) expect(POOL).toContain(pickCode(POOL, seeded(seed)));
+  });
+
+  it("can pick every code in the pool, first and last included", () => {
+    expect(pickCode(POOL, () => 0)).toBe("1");
+    expect(pickCode(POOL, () => 0.9999999)).toBe("174");
     const seen = new Set<string>();
     const random = seeded(5);
-    for (let i = 0; i < 500; i++) seen.add(randomCode(1, random));
-    expect([...seen].sort().join("")).toBe("0123456789");
+    for (let i = 0; i < 500; i++) seen.add(pickCode(POOL, random));
+    expect([...seen].sort()).toEqual([...POOL].sort());
   });
 
-  it("makes different codes on different draws", () => {
-    const random = seeded(9);
-    const codes = new Set(Array.from({ length: 50 }, () => randomCode(3, random)));
-    expect(codes.size).toBeGreaterThan(30);
+  it("works with a pool of one", () => {
+    expect(pickCode(["9"], seeded(1))).toBe("9");
   });
 });
 
 describe("extendSequence", () => {
   it("adds codes only as far as asked", () => {
-    expect(extendSequence([], 2, 2)).toHaveLength(2);
-    expect(extendSequence(["11"], 5, 2)).toHaveLength(5);
+    expect(extendSequence([], 2, POOL)).toHaveLength(2);
+    expect(extendSequence(["1"], 5, POOL)).toHaveLength(5);
+  });
+
+  it("only adds codes from the pool", () => {
+    for (const code of extendSequence([], 200, POOL, seeded(2))) expect(POOL).toContain(code);
   });
 
   it("never changes the codes already there", () => {
-    const before = ["12", "34", "56"];
-    const after = extendSequence(before, 10, 2, seeded(3));
+    const before = ["42", "1", "05"];
+    const after = extendSequence(before, 10, POOL, seeded(3));
     expect(after.slice(0, 3)).toEqual(before);
-    expect(before).toEqual(["12", "34", "56"]); // the original array is not modified
+    expect(before).toEqual(["42", "1", "05"]); // the original array is not modified
   });
 
   it("returns the same array when nothing needs adding", () => {
     const codes = ["1", "2", "3"];
-    expect(extendSequence(codes, 3, 1)).toBe(codes);
-    expect(extendSequence(codes, 1, 1)).toBe(codes);
-    expect(extendSequence(codes, 0, 1)).toBe(codes);
+    expect(extendSequence(codes, 3, POOL)).toBe(codes);
+    expect(extendSequence(codes, 1, POOL)).toBe(codes);
+    expect(extendSequence(codes, 0, POOL)).toBe(codes);
   });
 
-  it("makes codes with the requested number of digits", () => {
-    for (const code of extendSequence([], 50, 3, seeded(2))) expect(code).toMatch(/^[0-9]{3}$/);
+  it("with a pool of one, the same code repeats", () => {
+    expect(extendSequence([], 4, ["7"])).toEqual(["7", "7", "7", "7"]);
   });
 
   it("never goes past the maximum of 1000", () => {
-    expect(extendSequence([], 5000, 2, seeded(1))).toHaveLength(MAX_CODES);
-    const full = extendSequence([], MAX_CODES, 1, seeded(1));
-    expect(extendSequence(full, MAX_CODES + 1, 1)).toBe(full);
+    expect(extendSequence([], 5000, POOL, seeded(1))).toHaveLength(MAX_CODES);
+    const full = extendSequence([], MAX_CODES, POOL, seeded(1));
+    expect(extendSequence(full, MAX_CODES + 1, POOL)).toBe(full);
     expect(full).toHaveLength(1000);
   });
 
-  it("does not make more than it has to: asking for 2 gives exactly 2", () => {
+  it("does not make more than it has to: asking for 2 picks exactly 2", () => {
     let calls = 0;
-    extendSequence([], 2, 3, () => {
+    extendSequence([], 2, POOL, () => {
       calls += 1;
       return 0.5;
     });
-    expect(calls).toBe(6); // 2 codes x 3 digits, nothing extra
+    expect(calls).toBe(2);
   });
 });
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate } from "react-router";
 import { useAuth } from "../auth";
+import CodesGate from "../components/CodesGate";
 import SequenceTest from "../components/SequenceTest";
 
 type Mode = 1 | 2;
@@ -12,7 +13,7 @@ const modes: { id: Mode; label: string }[] = [
 
 // "Test Memory": a top-level page (next to Codes in the account bar) for testing how many
 // codes you can hold in your head. A switch at the top picks the mode.
-//  - Mode 1: memorize a sequence of codes for five minutes, then type it back.
+//  - Mode 1: memorize a sequence of your set codes for five minutes, then type it back.
 //  - Mode 2: not built yet.
 export default function TestMemoryPage() {
   const { user, loading } = useAuth();
@@ -45,7 +46,10 @@ export default function TestMemoryPage() {
       </div>
 
       {mode === 1 ? (
-        <SequenceTest key="mode-1" />
+        // Waits for the user's codes: the game is made of them.
+        <CodesGate>
+          <SequenceTest key="mode-1" />
+        </CodesGate>
       ) : (
         <p className="py-6 text-center text-lg text-slate-300">Under construction</p>
       )}

@@ -1,32 +1,38 @@
-import { memo, useEffect, useRef, useState, type FormEvent } from "react";
+import { memo, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Link } from "react-router";
 import { useAuth } from "../auth";
+import { useCodes } from "../codes";
 import {
   MAX_CODES,
   MAX_RECALL_DIGITS,
   MEMORIZE_SECONDS,
   extendSequence,
   scoreRecall,
+  usableCodes,
 } from "../memory/sequence";
 import { gridTileSizeForWidth, memoryTileSize } from "../tileSizing";
 import { useAreaSize } from "../useAreaSize";
 import { useElementSize } from "../useElementSize";
 import CodeCarousel from "./CodeCarousel";
 import CodeComponent from "./CodeComponent";
-import { inputField, primaryButton, secondaryButton } from "./ui";
+import RecallComparison from "./RecallComparison";
+import { inputField, primaryButton, secondaryButton, textLink } from "./ui";
 
 // Test Memory, mode 1. Three steps:
 //
-//  1. Memorize (5 minutes). Codes made up at random, one in the middle of the
-//     screen with the previous and next beside it at half brightness. Move with the
-//     buttons, the left/right arrow keys or a swipe. Each code is made up the first
-//     time it is needed, so only the part of the sequence you reach (plus one code
-//     ahead, which is what the right-hand neighbor shows) ever exists. There can be
-//     at most 1000. "Ready to recall" can end this step early.
+//  1. Memorize (5 minutes). Codes the user has already set (and that fit their
+//     current code system), picked at random, one in the middle of the screen with the
+//     previous and next beside it at half brightness. Move with the buttons, the
+//     left/right arrow keys or a swipe. Each code is picked the first time it is needed,
+//     so only the part of the sequence you reach (plus one code ahead, which is what the
+//     right-hand neighbor shows) ever exists. There can be at most 1000, and the same
+//     code can come up more than once. "Ready to recall" can end this step early.
 //  2. Recall. Type a code of up to 3 digits and press Enter: it is placed in the
-//     next position. Up to 1000 can be placed. "Finish" ends this step.
-//  3. Result. How many placed codes match the shown ones, position by position.
-//
-// The codes have as many digits as the user's current code system.
+//     next position. A placed code is drawn as set only if it really is one of the
+//     user's set codes, otherwise grayed out (a handy hint, and fine as a cheat).
+//     Up to 1000 can be placed. "Finish" ends this step.
+//  3. Result. How many placed codes match the shown ones, position by position, and a
+//     box that scrolls left and right showing the shown codes with what was typed under them.
 
 type Phase = "idle" | "memorize" | "recall" | "results";
 
@@ -36,15 +42,24 @@ function formatTime(seconds: number): string {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
-// One placed code. memo means it is only redrawn if its own digits change, so
-// placing the 900th code doesn't redraw the 899 before it.
-const PlacedTile = memo(function PlacedTile({ digits, size }: { digits: string; size: number }) {
-  return <CodeComponent digits={digits} isSet size={size} showLabel={false} tabbable={false} />;
+// One placed code, drawn as set only if it really is a set code. memo means it is only
+// redrawn if its own digits (or its look) change, so placing the 900th code doesn't redraw
+// the 899 before it.
+const PlacedTile = memo(function PlacedTile({ digits, isSet, size }: { digits: string; isSet: boolean; size: number }) {
+  return <CodeComponent digits={digits} isSet={isSet} size={size} showLabel={false} tabbable={false} />;
 });
 
 export default function SequenceTest() {
   const { user } = useAuth();
-  const digits = user?.codeSystem ?? 1;
+  const { entries } = useCodes();
+  const system = user?.codeSystem ?? 1;
+  // The codes this test may use: set, and within the current code system.
+  const pool = useMemo(() => usableCodes(entries, system), [entries, system]);
+  const isSetCode = useMemo(() => {
+    const set = new Set(pool);
+    return (code: string) => set.has(code);
+  }, [pool]);
+  const hasSetCodesOutsideSystem = pool.length === 0 && entries.some((entry) => entry.text.trim() !== "");
 
   const [phase, setPhase] = useState<Phase>("idle");
   // The codes made up so far, and which one is in the middle. Kept together so a move and the
@@ -56,8 +71,8 @@ export default function SequenceTest() {
   const endsAt = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const gridRef = useRef<HTMLDivElement>(null); // the placed-codes area, for scrolling it to the newest
-  // The codes keep the digit count they were made with, even if the code system changes meanwhile.
-  const roundDigits = useRef(digits);
+  // The round keeps the codes it started with, whatever happens to the user's codes meanwhile.
+  const roundPool = useRef<string[]>([]);
 
   const areaRef = useRef<HTMLDivElement>(null);
   const { width, height } = useAreaSize(areaRef);
@@ -65,8 +80,9 @@ export default function SequenceTest() {
   const [measureGrid, gridSize] = useElementSize<HTMLDivElement>();
 
   function start() {
-    roundDigits.current = digits;
-    setSeq({ codes: extendSequence([], 2, digits), index: 0 }); // the first code and the one beside it
+    if (pool.length === 0) return;
+    roundPool.current = pool;
+    setSeq({ codes: extendSequence([], 2, pool), index: 0 }); // the first code and the one beside it
     setPlaced([]);
     setTyped("");
     setSecondsLeft(MEMORIZE_SECONDS);
@@ -80,7 +96,7 @@ export default function SequenceTest() {
     setSeq((s) => {
       const target = Math.max(0, Math.min(next(s.index), s.codes.length - 1, MAX_CODES - 1));
       if (target === s.index) return s;
-      return { codes: extendSequence(s.codes, target + 2, roundDigits.current), index: target };
+      return { codes: extendSequence(s.codes, target + 2, roundPool.current), index: target };
     });
   }
   const goTo = (to: number) => moveTo(() => to);
@@ -143,11 +159,22 @@ export default function SequenceTest() {
       {phase === "idle" && (
         <>
           <p className="text-center text-sm text-muted">
-            You'll see {digits}-digit codes, one at a time, in the middle of the screen. Move through them with the
+            You'll see codes you've already set, one at a time, in the middle of the screen. Move through them with the
             arrow buttons, the left and right arrow keys, or a swipe. You have {formatTime(MEMORIZE_SECONDS)} to
             memorize as many as you can, in order. Then you'll type them back, in the same order, and get a score.
           </p>
-          <button type="button" className={primaryButton} onClick={start}>
+          {pool.length === 0 && (
+            <p className="text-center text-sm text-slate-200">
+              {hasSetCodesOutsideSystem
+                ? `You have no set codes in your ${system} digit system yet. `
+                : "You haven't set any codes yet. "}
+              <Link to="/codes/edit" className={textLink}>
+                Set some on the Edit tab
+              </Link>{" "}
+              to play.
+            </p>
+          )}
+          <button type="button" className={primaryButton} disabled={pool.length === 0} onClick={start}>
             Start
           </button>
         </>
@@ -231,7 +258,7 @@ export default function SequenceTest() {
                 style={{ gridTemplateColumns: `repeat(10, ${gridTile}px)`, gap: 3, width: "fit-content" }}
               >
                 {placed.map((code, i) => (
-                  <PlacedTile key={i} digits={code} size={gridTile} />
+                  <PlacedTile key={i} digits={code} isSet={isSetCode(code)} size={gridTile} />
                 ))}
               </div>
             )}
@@ -254,18 +281,25 @@ export default function SequenceTest() {
       )}
 
       {phase === "results" && (
-        <div role="status" className="flex w-full flex-col items-center gap-3">
-          <p className="text-xl font-bold text-slate-100">Your score</p>
-          <p className="text-4xl font-extrabold text-accent">
-            {score} <span className="text-xl font-semibold text-slate-300">/ {shown.length}</span>
+        <>
+          <div role="status" className="flex w-full shrink-0 flex-col items-center gap-1">
+            <p className="text-lg font-bold text-slate-100">
+              Your score:{" "}
+              <span className="text-2xl font-extrabold text-accent">{score}</span>{" "}
+              <span className="text-lg font-semibold text-slate-300">/ {shown.length}</span>
+            </p>
+            <p className="text-center text-sm text-muted">
+              {score} of the {shown.length} codes shown were in the right place. You placed {placed.length}.
+            </p>
+          </div>
+          <RecallComparison shown={shown} placed={placed} isSet={isSetCode} />
+          <p className="shrink-0 text-center text-xs text-muted">
+            Scroll sideways to compare. A gray tile in your row isn't one of your set codes.
           </p>
-          <p className="text-center text-sm text-muted">
-            {score} of the {shown.length} codes shown were in the right place. You placed {placed.length}.
-          </p>
-          <button type="button" className={primaryButton} onClick={start}>
+          <button type="button" className={`${primaryButton} shrink-0`} onClick={start}>
             Try again
           </button>
-        </div>
+        </>
       )}
     </div>
   );
