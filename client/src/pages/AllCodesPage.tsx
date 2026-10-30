@@ -1,4 +1,5 @@
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
+import { useNavigate } from "react-router";
 import { useAuth } from "../auth";
 import CodeSection, { COLUMNS, GAP } from "../components/CodeSection";
 import { useAreaSize } from "../useAreaSize";
@@ -44,10 +45,15 @@ function sectionsFor(codeSystem: number): Section[] {
 
 // "All Codes" sub-tab: every code in the user's code system, grouped under
 // headers. For now they are all unset because codes can't be saved yet.
+// Tapping one opens it in the Edit tab.
 export default function AllCodesPage() {
   const areaRef = useRef<HTMLElement>(null);
   const { width } = useAreaSize(areaRef);
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Tapping a tile opens the Edit tab on that code (the code rides in the address).
+  const openInEditor = useCallback((digits: string) => navigate(`/codes/edit?code=${digits}`), [navigate]);
 
   // Ten tiles and nine gaps have to fit across the page, so the tile is a tenth of what's left.
   const tileSize = Math.min(MAX_TILE_SIZE, Math.floor((width - (COLUMNS - 1) * GAP) / COLUMNS));
@@ -65,6 +71,7 @@ export default function AllCodesPage() {
             count={s.count}
             digitWidth={s.digitWidth}
             tileSize={tileSize}
+            onSelect={openInEditor}
           />
         ))}
     </section>
