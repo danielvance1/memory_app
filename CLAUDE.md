@@ -41,7 +41,7 @@ Lower priority: email verification (Resend, free tier; explicitly deferred but t
 
 - Live at memodeum.com: header page only, until the auth PRs below are merged and `main` is merged into `rel`.
 - **PR #4** `feature/auth-backend`: accounts API (signup, login, logout, /me), sessions, 500-user hard cap, rate limits, admin user list API, `make-admin` script.
-- **PR #5** `feature/auth-screens`: login, signup and admin-grid screens, account bar. Stacked on #4 (merge #4 first). This PR also adds this file.
+- **PR #5** `feature/auth-screens`: login, signup and admin-grid screens, account bar. Stacked on #4 (merge #4 first).
 - Admin is created only with the server script (`docker compose exec app node server/dist/scripts/make-admin.js <username-or-email>` in `~/memodeum` on the VPS), never through the website.
 - Hosting: IONOS VPS (Ubuntu 24.04), Docker Compose (Postgres 16, app, Caddy with automatic HTTPS), Porkbun domain. See README.
 
