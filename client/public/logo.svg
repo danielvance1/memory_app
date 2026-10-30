@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Memodeum logo">
+  <!-- An orange tile with a route through a memory palace: five stops joined by a path that
+       zigzags into an "M". -->
+  <rect width="32" height="32" rx="8" fill="#F97316"/>
+  <path d="M9 23V9l7 8 7-8v14" fill="none" stroke="#FFEDD5" stroke-opacity=".65" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="9" cy="23" r="2.7" fill="#fff"/>
+  <circle cx="9" cy="9" r="2.7" fill="#fff"/>
+  <circle cx="16" cy="17" r="2.7" fill="#fff"/>
+  <circle cx="23" cy="9" r="2.7" fill="#fff"/>
+  <circle cx="23" cy="23" r="2.7" fill="#fff"/>
+</svg>
