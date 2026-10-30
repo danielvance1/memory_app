@@ -2,7 +2,10 @@ import { NavLink, Navigate, Outlet } from "react-router";
 import { useAuth } from "../auth";
 
 // To add a sub-tab: add a line here and a matching <Route> in App.tsx.
-const subTabs = [{ to: "all", label: "All Codes" }];
+const subTabs = [
+  { to: "edit", label: "Edit" },
+  { to: "all", label: "All Codes" },
+];
 
 // The frame for everything under /codes: a row of sub-tabs, then whichever
 // sub-tab is selected (<Outlet />).
