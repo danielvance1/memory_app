@@ -31,12 +31,15 @@ export default function Layout() {
       </header>
 
       {/* Reserve the bar's height while loading so the page doesn't jump. */}
-      <nav aria-label="Account" className="mx-auto flex min-h-11 w-full max-w-5xl items-center justify-center gap-1 px-4">
+      <nav aria-label="Account" className="mx-auto flex min-h-11 w-full max-w-5xl flex-wrap items-center justify-center gap-1 px-4">
         {loading ? null : user ? (
           <>
             <span className="max-w-[10rem] truncate px-3 text-sm text-slate-400" title={user.username}>
               {user.username}
             </span>
+            <Link to="/codes" className={navButton}>
+              Codes
+            </Link>
             {user.isAdmin && (
               <Link to="/admin" className={navButton}>
                 Admin
