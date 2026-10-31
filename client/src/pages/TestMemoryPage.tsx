@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { Navigate } from "react-router";
-import { useAuth } from "../auth";
 import CodesGate from "../components/CodesGate";
 import SequenceTest from "../components/SequenceTest";
 
@@ -11,16 +9,12 @@ const modes: { id: Mode; label: string }[] = [
   { id: 2, label: "Mode 2" },
 ];
 
-// "Test Memory": a top-level page (next to Codes in the account bar) for testing how many
-// codes you can hold in your head. A switch at the top picks the mode.
+// "Test Memory" sub-tab of Practice (/practice/test), for testing how many codes you can hold in
+// your head. The Practice frame (components/SubTabs.tsx) already sends logged-out visitors to log in. A switch at the top picks the mode.
 //  - Mode 1: memorize a sequence of your set codes for five minutes, then type it back.
 //  - Mode 2: not built yet.
 export default function TestMemoryPage() {
-  const { user, loading } = useAuth();
   const [mode, setMode] = useState<Mode>(1);
-
-  if (loading) return null;
-  if (!user) return <Navigate to="/login" replace />;
 
   return (
     <section

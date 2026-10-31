@@ -15,7 +15,6 @@ export const secondaryButton = `${buttonBase} border-line-strong border-b-4 text
 
 export const dangerButton = `${buttonBase} border-danger-fill border-b-4 border-b-danger-fill-lo bg-danger-fill text-white hover:bg-danger-fill-hi active:translate-y-px active:border-b-2 disabled:active:translate-y-0 disabled:active:border-b-4`;
 
-export const navButton = `inline-flex min-h-11 items-center border-b-2 border-transparent px-2 font-display text-xs tracking-wide text-fg hover:border-brand hover:bg-surface active:bg-raised sm:px-3 ${focusRing}`;
 
 export const inputField = `block min-h-12 w-full border-2 bg-surface px-4 text-base text-fg placeholder:text-muted focus:outline-2 focus:outline-offset-0 focus:outline-brand`;
 

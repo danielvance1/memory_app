@@ -1,15 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router";
 import { useAuth } from "../auth";
+import AccountMenu from "./AccountMenu";
 import LogoM from "./LogoM";
-import { navButton } from "./ui";
+import MainNav from "./MainNav";
 
-// The frame around every screen: the app title, a small account bar, and
-// whichever page is currently showing (<Outlet />).
+// True while a text box has the keyboard focus. On a phone the on-screen keyboard takes half the
+// screen, so the bottom bar steps aside until you leave the box.
+function useTextBoxFocused() {
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    const isTextBox = (el: EventTarget | null) => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement;
+    const onIn = (e: FocusEvent) => setFocused(isTextBox(e.target));
+    // Moving from one box straight into another must not flash the bar back.
+    const onOut = (e: FocusEvent) => setFocused(isTextBox(e.relatedTarget));
+    document.addEventListener("focusin", onIn);
+    document.addEventListener("focusout", onOut);
+    return () => {
+      document.removeEventListener("focusin", onIn);
+      document.removeEventListener("focusout", onOut);
+    };
+  }, []);
+  return focused;
+}
+
+// The frame around every screen, top to bottom:
+//   the title bar (title, main links from 640px wide up, and the account menu),
+//   the page that is showing (<Outlet />),
+//   and on phones, the main links as a bar along the bottom.
 export default function Layout() {
-  const { user, loading, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [logoutFailed, setLogoutFailed] = useState(false);
+  const textBoxFocused = useTextBoxFocused();
 
   async function handleLogout() {
     setLogoutFailed(false);
@@ -22,74 +45,49 @@ export default function Layout() {
   }
 
   return (
-    // The page itself never scrolls: the title and account bar are pinned at the top and only
-    // the area below them (<main>) can scroll, if a page really has more than fits.
+    // The page itself never scrolls: the title bar and the bottom bar are pinned, and only the area
+    // between them (<main>) can scroll, if a page really has more than fits.
     <div className="flex h-dvh flex-col overflow-hidden bg-canvas text-fg">
-      {/* The top padding keeps the title clear of the iPhone notch. */}
-      <header className="shrink-0 px-6 pb-1 pt-[max(0.75rem,env(safe-area-inset-top))] text-center">
-        <Link to="/" className="inline-flex min-h-11 items-center px-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">
-          {/* The logo's M stands in for the first letter. Screen readers get the real name from the label;
-              the drawn pieces are hidden from them. */}
-          <h1 aria-label="Memodeum" className="inline-flex items-center text-3xl">
-            <LogoM className="mr-[0.03em]" />
-            <span aria-hidden="true">emodeum</span>
-          </h1>
-        </Link>
-        {/* Short screens need every pixel, so the tagline goes away there. */}
-        <p className="text-xs uppercase tracking-[0.25em] text-muted [@media(max-height:640px)]:hidden">Memory trainer</p>
+      {/* The top padding keeps the title clear of the iPhone notch. "relative z-20" lets the account menu float over the page. */}
+      <header className="relative z-20 shrink-0 border-b-2 border-line pt-[max(0.25rem,env(safe-area-inset-top))]">
+        <div className="mx-auto flex min-h-14 w-full max-w-5xl items-stretch px-3 sm:px-6">
+          <Link
+            to="/"
+            className="inline-flex min-h-11 items-center self-center px-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
+          >
+            <div>
+              {/* The logo's M stands in for the first letter. Screen readers get the real name from the label;
+                  the drawn pieces are hidden from them. */}
+              <h1 aria-label="Memodeum" className="flex items-center text-2xl sm:text-3xl">
+                <LogoM className="mr-[0.03em]" />
+                <span aria-hidden="true">emodeum</span>
+              </h1>
+              {/* Only where there is room; phones and short screens need every pixel. */}
+              <p className="hidden text-[0.65rem] uppercase tracking-[0.25em] text-muted sm:block [@media(max-height:640px)]:hidden">
+                Memory trainer
+              </p>
+            </div>
+          </Link>
+          <MainNav placement="top" />
+          <div className="ml-auto flex items-center">
+            {user && <AccountMenu username={user.username} isAdmin={user.isAdmin} onLogout={handleLogout} />}
+          </div>
+        </div>
       </header>
-
-      {/* Reserve the bar's height while loading so the page doesn't jump. */}
-      <div className="shrink-0 border-b-2 border-line">
-      <nav aria-label="Account" className="mx-auto flex min-h-11 w-full max-w-5xl flex-wrap items-center justify-center gap-0.5 px-4 sm:gap-1">
-        {loading ? null : user ? (
-          <>
-            {/* Phones narrower than 360px have no room for the name next to the buttons. */}
-            <span className="hidden max-w-[3.5rem] truncate px-1 text-sm text-muted min-[360px]:inline sm:max-w-[10rem] sm:px-3" title={user.username}>
-              {user.username}
-            </span>
-            <Link to="/codes" className={navButton}>
-              Codes
-            </Link>
-            <Link to="/test-memory" className={navButton}>
-              Test Memory
-            </Link>
-            <Link to="/about" className={navButton}>
-              About
-            </Link>
-            {user.isAdmin && (
-              <Link to="/admin" className={navButton}>
-                Admin
-              </Link>
-            )}
-            <button type="button" onClick={handleLogout} className={navButton}>
-              Log out
-            </button>
-          </>
-        ) : (
-          <>
-            <Link to="/about" className={navButton}>
-              About
-            </Link>
-            <Link to="/login" className={navButton}>
-              Log in
-            </Link>
-            <Link to="/signup" className={navButton}>
-              Sign up
-            </Link>
-          </>
-        )}
-      </nav>
-      </div>
       {logoutFailed && (
         <p role="alert" className="shrink-0 px-6 pt-2 text-center text-sm text-danger">
           Couldn't log out. Check your connection and try again.
         </p>
       )}
 
-      <main className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col overflow-y-auto px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+      <main className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col overflow-y-auto px-6 pb-4 pt-3">
         <Outlet />
       </main>
+
+      {/* "hidden" while typing on a phone, so the keyboard doesn't squeeze the page even smaller. */}
+      <div className={textBoxFocused ? "hidden" : "contents"}>
+        <MainNav placement="bottom" />
+      </div>
     </div>
   );
 }

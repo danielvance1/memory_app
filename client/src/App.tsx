@@ -9,6 +9,7 @@ import EditCodePage from "./pages/EditCodePage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import PracticePage from "./pages/PracticePage";
 import SignupPage from "./pages/SignupPage";
 import TestMemoryPage from "./pages/TestMemoryPage";
 
@@ -23,12 +24,18 @@ export default function App() {
         <Route path="signup" element={<SignupPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="admin" element={<AdminPage />} />
-        <Route path="test-memory" element={<TestMemoryPage />} />
+        {/* Old addresses, kept so bookmarks still work. */}
+        <Route path="test-memory" element={<Navigate to="/practice/test" replace />} />
         <Route path="codes" element={<CodesPage />}>
           <Route index element={<Navigate to="edit" replace />} />
           <Route path="edit" element={<EditCodePage />} />
           <Route path="all" element={<AllCodesPage />} />
+          <Route path="drill" element={<Navigate to="/practice/drill" replace />} />
+        </Route>
+        <Route path="practice" element={<PracticePage />}>
+          <Route index element={<Navigate to="drill" replace />} />
           <Route path="drill" element={<DrillPage />} />
+          <Route path="test" element={<TestMemoryPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>
