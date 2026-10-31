@@ -1,20 +1,50 @@
-/* The app's shared colors, in ONE place.
+/* The app's shared colors and fonts, in ONE place.
  *
  * Change a value here and every class that uses it changes with it:
  * "--color-accent" gives you bg-accent, text-accent, border-accent, and so on.
  *
  * The names describe the ROLE of the color, not its hue, so they stay true
- * if you later switch green to something else.
+ * if you later switch green or orange to something else.
  *
- * Only the code tile uses these so far. The rest of the app (page background,
- * buttons, tabs, forms) still uses raw Tailwind colors and will be moved over
- * piece by piece.
+ * The look: industrial and plain. Neutral charcoal surfaces, hard square corners,
+ * solid borders, green for actions and "set/correct", orange for the brand
+ * (logo, active tab, links, focus rings).
  */
 @theme {
-  /* The main brand color: the green on code tiles. */
-  --color-accent: #10b981;
+  /* Page background, and the raised surfaces on top of it. */
+  --color-canvas: #151719;
+  --color-surface: #1f2225;
+  --color-raised: #2b2f33;
+
+  /* Borders: a quiet one for dividers, a stronger one for fields and buttons. */
+  --color-line: #33383d;
+  --color-line-strong: #5a6068;
+
+  /* Text: main, a step down, and quiet secondary text. */
+  --color-fg: #eceeef;
+  --color-fg-dim: #c4c9ce;
+  --color-muted: #9aa1a9;
+  /* Dark text for use ON the green and orange fills (white on them is too faint). */
+  --color-ink: #0d140e;
+
+  /* Green: primary actions, set codes, correct answers. -hi / -lo are the hover and pressed shades. */
+  --color-accent: #22a124;
+  --color-accent-hi: #2dbb30;
+  --color-accent-lo: #178019;
+
+  /* Orange: the brand. Logo, active tab, links, focus rings. */
+  --color-brand: #bf6b17;
+  --color-brand-hi: #d9811f;
+
+  /* Red: errors and wrong answers. "danger" is for text, "danger-fill" for button backgrounds. */
+  --color-danger: #ef5a5f;
+  --color-danger-fill: #c8363b;
+  --color-danger-fill-hi: #de464b;
+  --color-danger-fill-lo: #a82a2f;
+
   /* The gray used for code tile fills, borders and digits. */
-  --color-tile: #334155;
-  /* Quiet secondary text on dark surfaces, like the small label on a tile. */
-  --color-muted: #94a3b8;
+  --color-tile: #2a2e32;
+
+  /* Bungee: titles, buttons, tabs and big numbers. Everything else stays plain sans. */
+  --font-display: "Bungee", ui-sans-serif, system-ui, sans-serif;
 }

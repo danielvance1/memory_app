@@ -19,16 +19,16 @@ export default function CodesPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Pinned: the tabs never move. They only scroll sideways inside themselves if there are ever more than fit. */}
-      <nav aria-label="Codes sections" className="mb-3 flex shrink-0 overflow-x-auto border-b border-slate-700">
+      <nav aria-label="Codes sections" className="mb-3 flex shrink-0 overflow-x-auto border-b border-line">
         {subTabs.map((tab) => (
           <NavLink
             key={tab.to}
             to={tab.to}
             className={({ isActive }) =>
-              `inline-flex min-h-11 shrink-0 items-center border-b-2 px-4 text-sm font-medium transition focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-indigo-300 ${
+              `inline-flex min-h-11 shrink-0 items-center border-b-4 px-4 font-display text-xs tracking-wide focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand ${
                 isActive
-                  ? "border-indigo-400 text-slate-100"
-                  : "border-transparent text-slate-400 hover:text-slate-200"
+                  ? "border-brand text-fg"
+                  : "border-transparent text-muted hover:text-fg"
               }`
             }
           >

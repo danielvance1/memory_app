@@ -34,10 +34,10 @@ export default function TestMemoryPage() {
             type="button"
             aria-pressed={mode === m.id}
             onClick={() => setMode(m.id)}
-            className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border px-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300 ${
+            className={`inline-flex min-h-11 flex-1 items-center justify-center border-2 px-2 font-display text-xs tracking-wide focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
               mode === m.id
-                ? "border-indigo-400 bg-indigo-500 text-white"
-                : "border-slate-600 text-slate-300 hover:bg-slate-800"
+                ? "border-accent bg-accent text-ink"
+                : "border-line-strong text-fg-dim hover:bg-surface"
             }`}
           >
             {m.label}
@@ -51,7 +51,7 @@ export default function TestMemoryPage() {
           <SequenceTest key="mode-1" />
         </CodesGate>
       ) : (
-        <p className="py-6 text-center text-lg text-slate-300">Under construction</p>
+        <p className="py-6 text-center text-lg text-fg-dim">Under construction</p>
       )}
     </section>
   );
