@@ -22,7 +22,7 @@ export const MIN_DISTANCE = 55;
 export const MAX_DISTANCE = 115;
 export const MIN_SIZE = 6;
 export const MAX_SIZE = 11;
-export const PARTICLE_COLORS = ["#10b981", "#34d399", "#818cf8", "#fbbf24", "#f472b6", "#38bdf8"];
+export const PARTICLE_COLORS = ["#22a124", "#4cc84e", "#bf6b17", "#e8923a", "#eceeef", "#9aa1a9"];
 
 /**
  * Makes one burst. The circle around the tile is split into `count` equal

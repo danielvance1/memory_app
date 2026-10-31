@@ -23,24 +23,25 @@ export default function Layout() {
   return (
     // The page itself never scrolls: the title and account bar are pinned at the top and only
     // the area below them (<main>) can scroll, if a page really has more than fits.
-    <div className="flex h-dvh flex-col overflow-hidden bg-slate-900 text-slate-100">
+    <div className="flex h-dvh flex-col overflow-hidden bg-canvas text-fg">
       {/* The top padding keeps the title clear of the iPhone notch. */}
       <header className="shrink-0 px-6 pb-1 pt-[max(0.75rem,env(safe-area-inset-top))] text-center">
-        <Link to="/" className="inline-flex min-h-11 items-center rounded-lg px-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-300">
+        <Link to="/" className="inline-flex min-h-11 items-center px-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">
           {/* The logo is decoration next to the name, so screen readers skip it. */}
           <img src="/logo.svg" alt="" width={32} height={32} className="mr-2 h-8 w-8 shrink-0" />
-          <h1 className="text-3xl font-bold tracking-tight">Memodeum</h1>
+          <h1 className="text-3xl">Memodeum</h1>
         </Link>
         {/* Short screens need every pixel, so the tagline goes away there. */}
-        <p className="text-sm text-slate-400 [@media(max-height:640px)]:hidden">Memory trainer</p>
+        <p className="text-xs uppercase tracking-[0.25em] text-muted [@media(max-height:640px)]:hidden">Memory trainer</p>
       </header>
 
       {/* Reserve the bar's height while loading so the page doesn't jump. */}
-      <nav aria-label="Account" className="mx-auto flex min-h-11 w-full max-w-5xl shrink-0 flex-wrap items-center justify-center gap-0.5 px-4 sm:gap-1">
+      <div className="shrink-0 border-b-2 border-line">
+      <nav aria-label="Account" className="mx-auto flex min-h-11 w-full max-w-5xl flex-wrap items-center justify-center gap-0.5 px-4 sm:gap-1">
         {loading ? null : user ? (
           <>
             {/* Phones narrower than 360px have no room for the name next to the buttons. */}
-            <span className="hidden max-w-[3.5rem] truncate px-1 text-sm text-slate-400 min-[360px]:inline sm:max-w-[10rem] sm:px-3" title={user.username}>
+            <span className="hidden max-w-[3.5rem] truncate px-1 text-sm text-muted min-[360px]:inline sm:max-w-[10rem] sm:px-3" title={user.username}>
               {user.username}
             </span>
             <Link to="/codes" className={navButton}>
@@ -69,8 +70,9 @@ export default function Layout() {
           </>
         )}
       </nav>
+      </div>
       {logoutFailed && (
-        <p role="alert" className="shrink-0 px-6 pt-2 text-center text-sm text-rose-300">
+        <p role="alert" className="shrink-0 px-6 pt-2 text-center text-sm text-danger">
           Couldn't log out. Check your connection and try again.
         </p>
       )}

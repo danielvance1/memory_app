@@ -1,6 +1,22 @@
 @import "tailwindcss";
 @import "./theme.css";
 
+/* Page-wide defaults. Headings use the display font (Bungee, see theme.css); the page color is set
+   here too so nothing flashes white before the app draws. */
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-canvas);
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+}
+
 /* When you score in the drill, confetti flies out of the tile (components/Celebration.tsx).
    Each piece gets its own direction, size and color from custom properties. People who ask
    their device for less motion get no confetti, only a brief brightening of the tile. */

@@ -15,7 +15,7 @@ export default function CodesGate({ children, loadingHeight = 0 }: { children: R
   if (status === "error") {
     return (
       <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-3 py-4">
-        <p role="alert" className="text-center text-sm text-rose-300">
+        <p role="alert" className="text-center text-sm text-danger">
           Couldn't load your codes. Check your connection and try again.
         </p>
         <button type="button" className={secondaryButton} onClick={reload}>

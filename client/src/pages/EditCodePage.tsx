@@ -112,13 +112,13 @@ export default function EditCodePage() {
             <p className="mt-2 text-center text-sm text-muted">Fill out the next unset code</p>
           </>
         ) : (
-          <p className="py-6 text-center text-base text-slate-200">All codes in your {system} digit system are set.</p>
+          <p className="py-6 text-center text-base text-fg">All codes in your {system} digit system are set.</p>
         )}
       </CodesGate>
 
       {system !== undefined && editingCode === null && (
         <div className="mt-4 flex w-full max-w-sm shrink-0 flex-col items-center gap-2">
-          <p className="text-lg font-semibold text-slate-100">{system} digit system</p>
+          <p className="text-lg font-semibold text-fg">{system} digit system</p>
 
           {/* Each button only exists when there is somewhere to go in that direction. */}
           {system < MAX_SYSTEM && (
@@ -133,7 +133,7 @@ export default function EditCodePage() {
           )}
 
           {error && (
-            <p role="alert" className="text-center text-sm text-rose-300">
+            <p role="alert" className="text-center text-sm text-danger">
               {error}
             </p>
           )}

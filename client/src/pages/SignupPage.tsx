@@ -39,7 +39,7 @@ export default function SignupPage() {
 
   return (
     <section className={narrow}>
-      <h2 className="text-center text-xl font-semibold">Create account</h2>
+      <h2 className="text-center text-xl">Create account</h2>
       <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-5">
         <TextField
           label="Username"
@@ -85,7 +85,7 @@ export default function SignupPage() {
           {submitting ? "Creating account…" : "Create account"}
         </button>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-400">
+      <p className="mt-6 text-center text-sm text-muted">
         Already have an account?{" "}
         <Link to="/login" className={textLink}>
           Log in

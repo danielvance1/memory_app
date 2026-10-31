@@ -177,7 +177,7 @@ export default function DrillGame({ direction }: { direction: DrillDirection }) 
         <>
           <p className="text-center text-sm text-muted">{game.intro(ROUND_SECONDS)}</p>
           {available.length === 0 && (
-            <p className="text-center text-sm text-slate-200">
+            <p className="text-center text-sm text-fg">
               {hasSetCodesOutsideSystem
                 ? `You have no set codes in your ${system} digit system yet. `
                 : "You haven't set any codes yet. "}
@@ -195,7 +195,7 @@ export default function DrillGame({ direction }: { direction: DrillDirection }) 
 
       {running && (
         <>
-          <div className="flex w-full shrink-0 items-baseline justify-between text-base font-semibold text-slate-100">
+          <div className="flex w-full shrink-0 items-baseline justify-between font-display text-sm text-fg">
             <p>Score: {score}</p>
             <p>Peeked: {peeks}</p>
             <p className="tabular-nums" aria-label={`${secondsLeft} seconds left`}>
@@ -217,14 +217,14 @@ export default function DrillGame({ direction }: { direction: DrillDirection }) 
             }}
           >
             {revealed && current ? (
-              <p className="break-words rounded-xl bg-indigo-500/20 px-4 py-2 text-center text-sm text-slate-100">
-                <span className="font-semibold text-indigo-300">Answer:</span> {game.revealed(current)}
+              <p className="break-words bg-brand/20 px-4 py-2 text-center text-sm text-fg">
+                <span className="font-semibold text-brand">Answer:</span> {game.revealed(current)}
               </p>
             ) : (
               answered &&
               current &&
               answered.code !== current.code && (
-                <p key={bursts} className="break-words rounded-xl bg-accent/15 px-4 py-2 text-center text-sm text-slate-100">
+                <p key={bursts} className="break-words bg-accent/15 px-4 py-2 text-center text-sm text-fg">
                   <span className="font-semibold text-accent">Correct!</span> {game.correct(answered)}
                 </p>
               )
@@ -236,13 +236,13 @@ export default function DrillGame({ direction }: { direction: DrillDirection }) 
           {textToCode ? (
             <div
               key={bursts}
-              className={`relative flex min-h-24 w-full max-w-sm flex-1 flex-col rounded-2xl border-2 border-accent bg-tile ${bursts > 0 ? "celebrate-flash" : ""}`}
+              className={`relative flex min-h-24 w-full max-w-sm flex-1 flex-col border-2 border-accent bg-tile ${bursts > 0 ? "celebrate-flash" : ""}`}
               style={{ maxHeight: "18rem" }}
               onMouseDown={(e) => e.preventDefault()}
             >
               {/* my-auto centres short text; long text scrolls inside the card. */}
               <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-                <p className="my-auto break-words text-center text-xl font-semibold text-slate-100">{current?.display}</p>
+                <p className="my-auto break-words text-center text-xl font-semibold text-fg">{current?.display}</p>
               </div>
               {bursts > 0 && <Celebration />}
             </div>
@@ -272,12 +272,12 @@ export default function DrillGame({ direction }: { direction: DrillDirection }) 
 
       {phase === "finished" && (
         <div role="status" className="flex w-full flex-col items-center gap-3">
-          <p className="text-xl font-bold text-slate-100">Time's up!</p>
-          <p className="text-lg text-slate-100">
+          <p className="text-xl font-bold text-fg">Time's up!</p>
+          <p className="text-lg text-fg">
             Your score: <span className="font-bold text-accent">{score}</span>
           </p>
-          <p className="text-base text-slate-300">
-            Answers peeked: <span className="font-bold text-indigo-300">{peeks}</span>
+          <p className="text-base text-fg-dim">
+            Answers peeked: <span className="font-bold text-brand">{peeks}</span>
           </p>
           <button type="button" className={primaryButton} onClick={start}>
             Try again
@@ -301,7 +301,7 @@ export default function DrillGame({ direction }: { direction: DrillDirection }) 
         enterKeyHint="done"
         // The code is only digits, so phones can show the number pad.
         inputMode={textToCode ? "numeric" : "text"}
-        className={running ? `${inputField} shrink-0 border-slate-600` : "sr-only"}
+        className={running ? `${inputField} shrink-0 border-line-strong` : "sr-only"}
       />
     </div>
   );

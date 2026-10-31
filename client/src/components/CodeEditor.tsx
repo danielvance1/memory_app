@@ -108,7 +108,7 @@ export default function CodeEditor({ digits, isSet, initialText, tileSize, sideB
           readOnly={saving}
           maxLength={MAX_TEXT_LENGTH}
           rows={2}
-          className={`${inputField} min-h-[4.5rem] flex-1 resize-none border-slate-600 py-3 ${sideBySide ? "max-h-64" : ""}`}
+          className={`${inputField} min-h-[4.5rem] flex-1 resize-none border-line-strong py-3 ${sideBySide ? "max-h-64" : ""}`}
         />
         <p className="shrink-0 text-right text-sm leading-none text-muted" aria-live="off">
           ({text.length}/{MAX_TEXT_LENGTH})
@@ -116,7 +116,7 @@ export default function CodeEditor({ digits, isSet, initialText, tileSize, sideB
 
         {confirmingDiscard ? (
           <div role="alertdialog" aria-label="Discard what you typed?" className="flex shrink-0 flex-col gap-2">
-            <p className="text-center text-sm text-slate-200">Discard what you typed?</p>
+            <p className="text-center text-sm text-fg">Discard what you typed?</p>
             <div className="flex gap-3">
               <button type="button" className={dangerButton} onClick={onClose}>
                 Discard
@@ -138,7 +138,7 @@ export default function CodeEditor({ digits, isSet, initialText, tileSize, sideB
         )}
 
         {saveError && !confirmingDiscard && (
-          <p role="alert" className="shrink-0 text-center text-sm text-rose-300">
+          <p role="alert" className="shrink-0 text-center text-sm text-danger">
             {saveError}
           </p>
         )}
