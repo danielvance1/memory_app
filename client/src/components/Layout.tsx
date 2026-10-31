@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router";
 import { useAuth } from "../auth";
+import LogoM from "./LogoM";
 import { navButton } from "./ui";
 
 // The frame around every screen: the app title, a small account bar, and
@@ -27,9 +28,12 @@ export default function Layout() {
       {/* The top padding keeps the title clear of the iPhone notch. */}
       <header className="shrink-0 px-6 pb-1 pt-[max(0.75rem,env(safe-area-inset-top))] text-center">
         <Link to="/" className="inline-flex min-h-11 items-center px-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">
-          {/* The logo is decoration next to the name, so screen readers skip it. */}
-          <img src="/logo.svg" alt="" width={32} height={32} className="mr-2 h-8 w-8 shrink-0" />
-          <h1 className="text-3xl">Memodeum</h1>
+          {/* The logo's M stands in for the first letter. Screen readers get the real name from the label;
+              the drawn pieces are hidden from them. */}
+          <h1 aria-label="Memodeum" className="inline-flex items-center text-3xl">
+            <LogoM className="mr-[0.03em]" />
+            <span aria-hidden="true">emodeum</span>
+          </h1>
         </Link>
         {/* Short screens need every pixel, so the tagline goes away there. */}
         <p className="text-xs uppercase tracking-[0.25em] text-muted [@media(max-height:640px)]:hidden">Memory trainer</p>
@@ -50,6 +54,9 @@ export default function Layout() {
             <Link to="/test-memory" className={navButton}>
               Test Memory
             </Link>
+            <Link to="/about" className={navButton}>
+              About
+            </Link>
             {user.isAdmin && (
               <Link to="/admin" className={navButton}>
                 Admin
@@ -61,6 +68,9 @@ export default function Layout() {
           </>
         ) : (
           <>
+            <Link to="/about" className={navButton}>
+              About
+            </Link>
             <Link to="/login" className={navButton}>
               Log in
             </Link>
