@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router";
 import Layout from "./components/Layout";
+import AboutPage from "./pages/AboutPage";
 import AdminPage from "./pages/AdminPage";
 import AllCodesPage from "./pages/AllCodesPage";
 import CodesPage from "./pages/CodesPage";
@@ -20,6 +21,7 @@ export default function App() {
         <Route index element={<HomePage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="signup" element={<SignupPage />} />
+        <Route path="about" element={<AboutPage />} />
         <Route path="admin" element={<AdminPage />} />
         <Route path="test-memory" element={<TestMemoryPage />} />
         <Route path="codes" element={<CodesPage />}>
