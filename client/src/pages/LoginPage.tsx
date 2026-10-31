@@ -31,7 +31,7 @@ export default function LoginPage() {
 
   return (
     <section className={narrow}>
-      <h2 className="text-center text-xl font-semibold">Log in</h2>
+      <h2 className="text-center text-xl">Log in</h2>
       <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-5">
         <TextField
           label="Username or email"
@@ -58,7 +58,7 @@ export default function LoginPage() {
           {submitting ? "Logging in…" : "Log in"}
         </button>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-400">
+      <p className="mt-6 text-center text-sm text-muted">
         New here?{" "}
         <Link to="/signup" className={textLink}>
           Create an account

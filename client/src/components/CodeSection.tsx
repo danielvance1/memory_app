@@ -55,7 +55,7 @@ export default function CodeSection({
 
   return (
     <section aria-label={title} className="mx-auto shrink-0" style={{ width: gridWidth(tileSize) }}>
-      <h2 className="mb-3 text-lg font-semibold text-slate-100">{title}</h2>
+      <h2 className="mb-3 text-lg text-fg">{title}</h2>
       <div ref={boxRef} style={{ height: boxHeight }}>
         {near && (
           <div

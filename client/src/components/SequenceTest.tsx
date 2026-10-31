@@ -164,7 +164,7 @@ export default function SequenceTest() {
             memorize as many as you can, in order. Then you'll type them back, in the same order, and get a score.
           </p>
           {pool.length === 0 && (
-            <p className="text-center text-sm text-slate-200">
+            <p className="text-center text-sm text-fg">
               {hasSetCodesOutsideSystem
                 ? `You have no set codes in your ${system} digit system yet. `
                 : "You haven't set any codes yet. "}
@@ -182,7 +182,7 @@ export default function SequenceTest() {
 
       {phase === "memorize" && (
         <>
-          <div className="flex w-full shrink-0 items-baseline justify-between text-base font-semibold text-slate-100">
+          <div className="flex w-full shrink-0 items-baseline justify-between font-display text-sm text-fg">
             <p>
               Code {seq.index + 1} <span className="text-sm font-normal text-muted">of {MAX_CODES} at most</span>
             </p>
@@ -216,7 +216,7 @@ export default function SequenceTest() {
 
       {phase === "recall" && (
         <>
-          <div className="flex w-full shrink-0 items-baseline justify-between text-base font-semibold text-slate-100">
+          <div className="flex w-full shrink-0 items-baseline justify-between font-display text-sm text-fg">
             <p>Recall the codes in order</p>
             <p className="tabular-nums text-sm text-muted">
               {placed.length} / {MAX_CODES}
@@ -236,7 +236,7 @@ export default function SequenceTest() {
               autoComplete="off"
               autoCorrect="off"
               enterKeyHint="enter"
-              className={`${inputField} min-w-0 flex-1 border-slate-600`}
+              className={`${inputField} min-w-0 flex-1 border-line-strong`}
             />
             <button type="submit" className={`${primaryButton} w-auto! shrink-0`} disabled={typed === ""}>
               Place
@@ -283,10 +283,10 @@ export default function SequenceTest() {
       {phase === "results" && (
         <>
           <div role="status" className="flex w-full shrink-0 flex-col items-center gap-1">
-            <p className="text-lg font-bold text-slate-100">
+            <p className="text-lg font-bold text-fg">
               Your score:{" "}
               <span className="text-2xl font-extrabold text-accent">{score}</span>{" "}
-              <span className="text-lg font-semibold text-slate-300">/ {shown.length}</span>
+              <span className="text-lg font-semibold text-fg-dim">/ {shown.length}</span>
             </p>
             <p className="text-center text-sm text-muted">
               {score} of the {shown.length} codes shown were in the right place. You placed {placed.length}.

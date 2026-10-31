@@ -9,16 +9,16 @@ export default function HomePage() {
   if (user) {
     return (
       <section className={`${narrow} text-center`}>
-        <h2 className="text-xl font-semibold">Welcome back, {user.username}</h2>
-        <p className="mt-2 text-slate-400">Your codes and drills are coming soon.</p>
+        <h2 className="text-xl">Welcome back, {user.username}</h2>
+        <p className="mt-2 text-muted">Your codes and drills are coming soon.</p>
       </section>
     );
   }
 
   return (
     <section className={`${narrow} text-center`}>
-      <h2 className="text-xl font-semibold">Train your memory</h2>
-      <p className="mt-2 text-slate-400">Create an account to get started.</p>
+      <h2 className="text-xl">Train your memory</h2>
+      <p className="mt-2 text-muted">Create an account to get started.</p>
       <div className="mt-6 flex flex-col gap-3">
         <Link to="/signup" className={primaryButton}>
           Create account

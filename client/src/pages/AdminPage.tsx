@@ -51,25 +51,25 @@ export default function AdminPage() {
   return (
     <section>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="text-xl font-semibold">Users</h2>
+        <h2 className="text-xl">Users</h2>
         {data && (
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted">
             {data.total} of {data.max} accounts
           </p>
         )}
       </div>
 
       {error && (
-        <p role="alert" className="mt-4 rounded-xl bg-rose-950/70 px-4 py-3 text-sm text-rose-200">
+        <p role="alert" className="mt-4 bg-danger/15 px-4 py-3 text-sm text-danger">
           {error}
         </p>
       )}
-      {!data && !error && <p className="mt-4 text-slate-400">Loading…</p>}
+      {!data && !error && <p className="mt-4 text-muted">Loading…</p>}
 
       {data && (
-        <div className="mt-4 overflow-x-auto rounded-2xl bg-slate-800">
+        <div className="mt-4 overflow-x-auto bg-surface">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-700 text-xs uppercase tracking-wide text-slate-400">
+            <thead className="border-b border-line text-xs uppercase tracking-wide text-muted">
               <tr>
                 <th scope="col" className="px-3 py-3 font-medium sm:px-4">
                   Username
@@ -82,19 +82,19 @@ export default function AdminPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-700/60">
+            <tbody className="divide-y divide-line">
               {data.users.map((row) => (
                 <tr key={row.id}>
                   <td className="px-3 py-3 align-top font-medium sm:px-4">
                     <span className="break-all">{row.username}</span>
                     {row.isAdmin && (
-                      <span className="ml-2 rounded-full bg-indigo-500/20 px-2 py-0.5 text-xs font-medium text-indigo-300">
+                      <span className="ml-2 bg-brand/20 px-2 py-0.5 text-xs font-medium text-brand">
                         admin
                       </span>
                     )}
                   </td>
-                  <td className="break-all px-3 py-3 align-top text-slate-300 sm:px-4">{row.email}</td>
-                  <td className="px-3 py-3 align-top text-slate-300 sm:whitespace-nowrap sm:px-4">
+                  <td className="break-all px-3 py-3 align-top text-fg-dim sm:px-4">{row.email}</td>
+                  <td className="px-3 py-3 align-top text-fg-dim sm:whitespace-nowrap sm:px-4">
                     {formatLastLogin(row.lastLoginAt)}
                   </td>
                 </tr>

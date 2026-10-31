@@ -78,9 +78,9 @@ export default function CodeComponent({
   // On hover the border mixes in white (35-45%) on top of the tile-wide
   // brightening, so the outline lights up more than the inside does.
   const colors = isSet
-    ? "border-tile bg-accent text-tile group-hover:border-[color-mix(in_oklab,var(--color-tile),white_40%)]"
+    ? "border-tile bg-accent text-ink group-hover:border-[color-mix(in_oklab,var(--color-tile),white_40%)]"
     : "border-accent bg-tile text-accent group-hover:border-[color-mix(in_oklab,var(--color-accent),white_45%)]";
-  const labelColor = isSet ? "text-tile/70" : "text-muted";
+  const labelColor = isSet ? "text-ink/70" : "text-muted";
 
   return (
     <button
@@ -95,12 +95,12 @@ export default function CodeComponent({
       // width and height come from one number, which is what keeps it square.
       style={{ width: length, height: length }}
       // "@container" lets the @min-[64px] classes inside react to this button's own width.
-      className={`group @container relative inline-block shrink-0 rounded-[12%] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300 ${className}`}
+      className={`group @container relative inline-block shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${className}`}
     >
       {/* The visible tile. On hover it rises 4% of its own height, brightens, and its border lightens extra. */}
       <span
         style={{ fontSize: `calc(${length} * ${digitScale})` }}
-        className={`relative flex h-full w-full items-center justify-center rounded-[12%] border-2 font-extrabold tabular-nums leading-none transition duration-150 ease-out group-hover:-translate-y-[4%] group-hover:brightness-110 group-active:translate-y-0 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 ${colors}`}
+        className={`relative flex h-full w-full items-center justify-center border-2 font-extrabold tabular-nums leading-none transition duration-150 ease-out group-hover:-translate-y-[4%] group-hover:brightness-110 group-active:translate-y-0 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 ${colors}`}
       >
         {labelText && (
           <span

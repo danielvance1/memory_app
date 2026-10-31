@@ -35,7 +35,7 @@ function Empty({ label }: { label: string }) {
     <div
       role="img"
       aria-label={label}
-      className="rounded-[12%] border-2 border-dashed border-slate-700"
+      className=" border-2 border-dashed border-line"
       style={{ width: TILE, height: TILE }}
     />
   );
@@ -45,7 +45,7 @@ function Empty({ label }: { label: string }) {
 // its row and the box has no padding on the left (the label brings its own), so nothing shows through beside it.
 function RowLabel({ children }: { children?: ReactNode }) {
   return (
-    <div className="sticky left-0 z-10 -my-1 flex items-center self-stretch bg-slate-900 py-1 pl-2 pr-2 text-sm font-semibold text-slate-200 shadow-[6px_0_6px_-4px_rgb(15,23,42)]">
+    <div className="sticky left-0 z-10 -my-1 flex items-center self-stretch bg-canvas py-1 pl-2 pr-2 text-sm font-semibold text-fg">
       {children}
     </div>
   );
@@ -75,7 +75,7 @@ export default function RecallComparison({ shown, placed, isSet }: RecallCompari
       role="region"
       aria-label="The codes shown and the codes you typed, side by side. Scroll left and right."
       tabIndex={0}
-      className="relative w-full shrink-0 overflow-x-auto overflow-y-hidden rounded-xl border border-slate-700 bg-slate-900 py-2 pr-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+      className="relative w-full shrink-0 overflow-x-auto overflow-y-hidden border border-line bg-canvas py-2 pr-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
     >
       <div
         className="grid w-max items-center"
@@ -112,8 +112,8 @@ export default function RecallComparison({ shown, placed, isSet }: RecallCompari
               tabbable={false}
               className={
                 correct
-                  ? "ring-2 ring-accent ring-offset-2 ring-offset-slate-900"
-                  : "ring-2 ring-rose-400 ring-offset-2 ring-offset-slate-900"
+                  ? "ring-2 ring-accent ring-offset-2 ring-offset-canvas"
+                  : "ring-2 ring-danger ring-offset-2 ring-offset-canvas"
               }
             />
           );
@@ -126,7 +126,7 @@ export default function RecallComparison({ shown, placed, isSet }: RecallCompari
             <div
               key={`m${i}`}
               className={`text-center text-sm font-bold ${
-                typed === undefined ? "text-muted" : correct ? "text-accent" : "text-rose-400"
+                typed === undefined ? "text-muted" : correct ? "text-accent" : "text-danger"
               }`}
             >
               {typed === undefined ? "—" : correct ? "✓" : "✗"}
